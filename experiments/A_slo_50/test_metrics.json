@@ -1,0 +1,11 @@
+{
+    "test_accuracy": 92.51,
+    "avg_latency_ms": 67.4334123134613,
+    "p95_latency_ms": 82.40105211734772,
+    "exit_distribution": {
+        "1": 0,
+        "3": 10000,
+        "final": 0
+    },
+    "split_point": 0
+}
