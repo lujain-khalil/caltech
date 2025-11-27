@@ -1,0 +1,13 @@
+{
+    "dataset": "fmnist",
+    "epochs": 30,
+    "batch_size": 64,
+    "lr": 0.001,
+    "slo_target": 0.1,
+    "avg_rtt": 10.0,
+    "avg_bw": 50.0,
+    "lambda_lat": 2.0,
+    "mu_slo": 10.0,
+    "temp_start": 5.0,
+    "temp_end": 0.1
+}
