@@ -38,7 +38,7 @@ def profile_hardware(filename="latency_profile.json"):
             
             profiling_data[f"block_{i}"] = {
                 "cloud_time_sec": median_time,
-                "edge_time_sec": median_time * 5.0, # Simulate 5x slower edge
+                "edge_time_sec": median_time * 50.0, # Simulate 50x slower edge
                 "output_bytes": output_size_bytes
             }
             print(f"Block {i}: {median_time*1000:.3f}ms (Cloud) | Out: {output_size_bytes} B")
