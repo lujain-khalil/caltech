@@ -4,21 +4,34 @@ from torchvision import datasets, transforms
 import numpy as np
 from .data_utils import get_dataloaders
 
-def evaluate_model(model, net_sim, profiles, device, dataset_name="fashionmnist", batch_size=64):
+def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batch_size=64):
     """
     Simulates inference on the test set.
+    
+    Args:
+        model: The deployment-aware model with early exits
+        net_sim: Network simulator for bandwidth and latency
+        profiles: Hardware profiles with timing information
+        device: torch device to run on
+        dataset_name: Dataset to test on ('cifar10', 'mnist', 'fmnist')
+        batch_size: Batch size for testing
     """
     model.eval()
     
-    # Load Test Data
-    transform = transforms.Compose([
-        transforms.Resize((28, 28)), 
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
-    ])
-    test_dataset = datasets.FashionMNIST(root='./data', train=False, download=True, transform=transform)
+    # Load Test Data using the appropriate dataset
+    dataset_name_lower = dataset_name.lower() if isinstance(dataset_name, str) else "fmnist"
+    
+    # Validate dataset choice
+    valid_datasets = {"cifar10", "mnist", "fmnist"}
+    if dataset_name_lower not in valid_datasets:
+        print(f"Warning: Dataset '{dataset_name}' not recognized. Using 'fmnist' instead.")
+        dataset_name_lower = "fmnist"
+    
+    print(f"Loading {dataset_name_lower.upper()} test dataset for evaluation...")
+    
+    # Get the correct test loader
     _, test_loader, _, _ = get_dataloaders(
-        dataset_name=profiles.get('dataset_used', 'fashionmnist'), # Fallback or pass from config
+        dataset_name=dataset_name_lower,
         batch_size=batch_size,
     )
     
@@ -26,14 +39,15 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fashionmnist"
     total_samples = 0
     correct = 0
     latencies = []
-    exit_counts = {k: 0 for k in model.exit_points} # How many times did we exit at 1? at 3?
+    exit_counts = {k: 0 for k in model.exit_points}  # How many times did we exit at each point?
     exit_counts['final'] = 0
     
     # 1. Determine the Fixed Split Point (The one with highest logit)
     split_probs = F.softmax(model.split_logits, dim=0)
     split_point = torch.argmax(split_probs).item()
     
-    print(f"Running Evaluation. Fixed Split Point: Block {split_point}")
+    print(f"Running Evaluation on {dataset_name_lower.upper()}. Fixed Split Point: Block {split_point}")
+
 
     with torch.no_grad():
         for data, target in test_loader:

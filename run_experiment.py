@@ -3,7 +3,6 @@ import os
 import json
 import torch
 import sys
-from datetime import datetime
 
 # Import from src
 from src.resnet_split import SplittableResNet18
@@ -20,7 +19,7 @@ def main():
     
     # Experiment Settings
     parser.add_argument("--exp_name", type=str, default="default_run")
-    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.001)
     
@@ -31,7 +30,7 @@ def main():
     
     # Loss Weights
     parser.add_argument("--lambda_lat", type=float, default=2.0)
-    parser.add_argument("--mu_slo", type=float, default=5.0)
+    parser.add_argument("--mu_slo", type=float, default=10.0)
     
     args = parser.parse_args()
 

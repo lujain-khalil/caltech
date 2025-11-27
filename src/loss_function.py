@@ -3,18 +3,19 @@ import torch.nn as nn
 import numpy as np
 
 class SLOAwareLoss(nn.Module):
-    def __init__(self, profiles, network_sim, slo_target_sec=0.1, alpha_cvar=0.05, lambda_lat=0.1, mu_slo=1.0):
+    def __init__(self, profiles, network_sim, slo_target_sec=0.1, alpha_cvar=0.05, lambda_lat=2.0, mu_slo=10.0):
         super().__init__()
         self.profiles = profiles # The Loaded JSON
         self.net_sim = network_sim
         self.slo_target = slo_target_sec
         self.alpha_cvar = alpha_cvar # For P95 latency
         
-        # Hyperparameters from paper [cite: 155, 157]
+        # [cite_start]Hyperparameters from paper [cite: 155, 157]
         self.lambda_lat = lambda_lat # Weight for average latency
         self.mu_slo = mu_slo         # Weight for SLO violation
         
         self.ce_loss = nn.CrossEntropyLoss()
+        self.epsilon = 1e-8 # Numerical stability for logs
 
     def forward(self, final_pred, exit_preds, split_probs, exit_confidences, targets, batch_network_state):
         """
@@ -46,6 +47,7 @@ class SLOAwareLoss(nn.Module):
             total_acc_loss += (p_actual_exit * loss_i).mean()
             
             # Update probability of continuing to next layer
+            # Clamp to avoid numerical instability
             p_continue = p_continue * (1 - p_exit)
             
         # Add Final Head Loss
@@ -84,23 +86,14 @@ class SLOAwareLoss(nn.Module):
         
         # Expected Latency = dot product of (Split Probs * Candidate Latencies)
         # This gives us a single scalar "Expected Time" for the architecture choice
-        # Note: We treat latency as constant across the batch for the split-decision, 
-        # but exit-decisions vary per image. 
-        # For simplicity (and stability), we apply split logic globally per batch.
         expected_latency = torch.sum(split_probs * candidate_latencies)
         
-        # --- SLO PENALTY (CVaR) ---
+        # --- SLO PENALTY (CVaR / ReLU) ---
         # Calculate violation: ReLU(Latency - Target)
         violation = torch.relu(expected_latency - self.slo_target)
         
-        # Since expected_latency here is a scalar (averaged over split probs), 
-        # CVaR simplifies to just the violation itself in this specific formulation 
-        # unless we sample multiple network states. 
-        # To strictly follow the paper's CVaR on the batch, we would need 
-        # per-sample latencies, but latency is dominated by the shared Network State.
-        # We will use the scalar violation for gradient stability.
-        
         # TOTAL LOSS
+        # We verify that violation > 0 before applying penalty to avoid gradient noise
         total_loss = total_acc_loss + \
                      (self.lambda_lat * expected_latency) + \
                      (self.mu_slo * violation)

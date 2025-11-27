@@ -565,8 +565,6 @@ def plot_all_latency_comparison(figures_dir, ablation_sets):
     print(f"  Saved: all_03_latency_all_experiments.png")
 
 
-
-
 if __name__ == "__main__":
     # Path to attempt_1 directory
     attempt_1_path = Path(__file__).parent / "experiments" / "attempt_1"
