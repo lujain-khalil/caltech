@@ -1,0 +1,50 @@
+{
+    "test_accuracy": 91.98,
+    "avg_latency_ms": 72.85041255950928,
+    "p95_latency_ms": 90.39260447025299,
+    "exit_distribution": {
+        "2": 0,
+        "4": 9625,
+        "final": 375
+    },
+    "exit_rates": {
+        "2": 0.0,
+        "4": 0.9625,
+        "final": 0.0375
+    },
+    "split_point": 0,
+    "split_probs": [
+        0.9942420125007629,
+        2.6659307650334085e-08,
+        5.590453611148405e-08,
+        4.42625003316266e-09,
+        0.005758007988333702
+    ],
+    "exit_thresholds": {
+        "2": 4.4911885261535645,
+        "4": 0.7473920583724976
+    },
+    "exit_scales": {
+        "2": 4.99085807800293,
+        "4": 1.0960830450057983
+    },
+    "exit_confidence_stats": {
+        "2": {
+            "mean_conf_exit": null,
+            "min_conf_exit": null,
+            "max_conf_exit": null,
+            "num_exited": 0
+        },
+        "4": {
+            "mean_conf_exit": 0.9906353803795653,
+            "min_conf_exit": 0.7494365572929382,
+            "max_conf_exit": 1.0,
+            "num_exited": 9625
+        }
+    },
+    "num_samples": 10000,
+    "dataset": "fmnist",
+    "edge_slowdown": 20.0,
+    "net_avg_bw_mbps": 15.0,
+    "net_avg_rtt_ms": 50.0
+}

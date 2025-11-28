@@ -1,0 +1,27 @@
+{
+    "block_0": {
+        "cloud_time_sec": 0.00024467939510941505,
+        "edge_time_sec": 0.004893587902188301,
+        "output_bytes": 16384
+    },
+    "block_1": {
+        "cloud_time_sec": 0.000609647948294878,
+        "edge_time_sec": 0.01219295896589756,
+        "output_bytes": 16384
+    },
+    "block_2": {
+        "cloud_time_sec": 0.000709916464984417,
+        "edge_time_sec": 0.01419832929968834,
+        "output_bytes": 8192
+    },
+    "block_3": {
+        "cloud_time_sec": 0.0011046864092350006,
+        "edge_time_sec": 0.022093728184700012,
+        "output_bytes": 4096
+    },
+    "block_4": {
+        "cloud_time_sec": 0.0012899795547127724,
+        "edge_time_sec": 0.025799591094255447,
+        "output_bytes": 2048
+    }
+}
