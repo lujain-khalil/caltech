@@ -2,15 +2,17 @@ import torch
 import time
 import json
 import numpy as np
+import argparse
 from src.resnet_split import SplittableResNet18
 
-def profile_hardware(filename="latency_profile.json"):
+def profile_hardware(filename="latency_profile.json", edge_slowdown=20.0):
     # Since we are duplicating channels for MNIST/FMNIST, 
     # we ONLY profile for 3 channels (RGB) configuration.
     channels = 3
     input_shape = (1, channels, 32, 32)
     
-    print(f"--- Profiling Hardware for 3-Channel Input (Universal) ---")
+    print(f"--- Profiling Hardware for 3-Channel Input ---")
+    print(f"Edge slowdown factor: x{edge_slowdown:.1f}")
     
     # Init model with standard 3 channels
     model = SplittableResNet18(num_classes=10, input_channels=channels, pretrained=True)
@@ -38,7 +40,7 @@ def profile_hardware(filename="latency_profile.json"):
             
             profiling_data[f"block_{i}"] = {
                 "cloud_time_sec": median_time,
-                "edge_time_sec": median_time * 80.0, # Simulate 80x slower edge
+                "edge_time_sec": median_time * edge_slowdown, # Simulate slower edge
                 "output_bytes": output_size_bytes
             }
             print(f"Block {i}: {median_time*1000:.3f}ms (Cloud) | Out: {output_size_bytes} B")
@@ -48,4 +50,11 @@ def profile_hardware(filename="latency_profile.json"):
     print(f"Saved {filename}\n")
 
 if __name__ == "__main__":
-    profile_hardware()
+    parser = argparse.ArgumentParser(description="Profile hardware for edge/cloud ResNet blocks")
+    parser.add_argument("--output", type=str, default="latency_profile.json",
+                        help="Output JSON filename for latency profile.")
+    parser.add_argument("--edge_slowdown", type=float, default=20.0,
+                        help="Factor by which edge is slower than cloud.")
+    args = parser.parse_args()
+
+    profile_hardware(filename=args.output, edge_slowdown=args.edge_slowdown)

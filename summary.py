@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def format_table(data, headers):
-    """
-    Format data as a simple ASCII table.
-    
+    """    
     Args:
         data: List of dictionaries with data for each row
         headers: List of column headers
@@ -86,6 +84,7 @@ def summarize_attempt(attempt_dir):
             slo_target = config.get("slo_target", "N/A")
             avg_rtt = config.get("avg_rtt", "N/A")
             avg_bw = config.get("avg_bw", "N/A")
+            mu_slo = config.get("mu_slo", "N/A")  # Extract mu parameter
             
             # Convert slo_target to ms
             slo_target_ms = slo_target * 1000 if isinstance(slo_target, (int, float)) else "N/A"
@@ -104,6 +103,10 @@ def summarize_attempt(attempt_dir):
             avg_latency = test_metrics.get("avg_latency_ms", "N/A")
             p95_latency = test_metrics.get("p95_latency_ms", "N/A")
             split_point = test_metrics.get("split_point", "N/A")
+            exit_distribution = test_metrics.get("exit_distribution", {})
+            exit_1 = exit_distribution.get("1", "N/A")
+            exit_3 = exit_distribution.get("3", "N/A")
+            exit_final = exit_distribution.get("final", "N/A")
             
             # Add to results
             experiments_data.append({
@@ -112,14 +115,15 @@ def summarize_attempt(attempt_dir):
                 "SLO Target (ms)": f"{slo_target_ms:.1f}" if isinstance(slo_target_ms, float) else slo_target_ms,
                 "Avg RTT": avg_rtt,
                 "Avg BW": avg_bw,
+                "Mu (SLO Penalty)": f"{mu_slo:.2f}" if isinstance(mu_slo, (int, float)) else mu_slo,
                 "Train Accuracy": f"{train_accuracy:.2f}" if isinstance(train_accuracy, (int, float)) else train_accuracy,
                 "Train Latency (ms)": f"{train_latency_ms:.2f}" if isinstance(train_latency_ms, (int, float)) else train_latency_ms,
-                "Exit Prob [0]": f"{exit_prob_0:.6f}" if isinstance(exit_prob_0, (int, float)) else exit_prob_0,
-                "Exit Prob [1]": f"{exit_prob_1:.6f}" if isinstance(exit_prob_1, (int, float)) else exit_prob_1,
-                "Loss": f"{loss:.6f}" if isinstance(loss, (int, float)) else loss,
                 "Test Accuracy": f"{test_accuracy:.2f}" if isinstance(test_accuracy, (int, float)) else test_accuracy,
                 "Avg Latency (ms)": f"{avg_latency:.2f}" if isinstance(avg_latency, (int, float)) else avg_latency,
                 "P95 Latency (ms)": f"{p95_latency:.2f}" if isinstance(p95_latency, (int, float)) else p95_latency,
+                "Exit Head 1": exit_1,
+                "Exit Head 3": exit_3,
+                "Exit Head Final": exit_final,
                 "Split Point": split_point,
             })
             
@@ -129,6 +133,7 @@ def summarize_attempt(attempt_dir):
                 "slo_target": float(slo_target) if isinstance(slo_target, (int, float)) else None,
                 "avg_rtt": float(avg_rtt) if isinstance(avg_rtt, (int, float)) else None,
                 "avg_bw": float(avg_bw) if isinstance(avg_bw, (int, float)) else None,
+                "mu_slo": float(mu_slo) if isinstance(mu_slo, (int, float)) else None,
                 "train_accuracy": float(train_accuracy) if isinstance(train_accuracy, (int, float)) else None,
                 "train_latency_ms": float(train_latency_ms) if isinstance(train_latency_ms, (int, float)) else None,
                 "exit_prob_0": float(exit_prob_0) if isinstance(exit_prob_0, (int, float)) else None,
@@ -138,6 +143,9 @@ def summarize_attempt(attempt_dir):
                 "avg_latency": float(avg_latency) if isinstance(avg_latency, (int, float)) else None,
                 "p95_latency": float(p95_latency) if isinstance(p95_latency, (int, float)) else None,
                 "split_point": int(split_point) if isinstance(split_point, (int, float)) else None,
+                "exit_1": int(exit_1) if isinstance(exit_1, (int, float)) else None,
+                "exit_3": int(exit_3) if isinstance(exit_3, (int, float)) else None,
+                "exit_final": int(exit_final) if isinstance(exit_final, (int, float)) else None,
                 "train_log": train_log,
             }
         
@@ -154,7 +162,7 @@ def summarize_attempt(attempt_dir):
         table = format_table(experiments_data, headers)
         
         # Write to summary file
-        summary_file = attempt_path / "summary_1.txt"
+        summary_file = attempt_path / "summary.txt"
         with open(summary_file, 'w') as f:
             f.write(table)
         
@@ -166,19 +174,6 @@ def summarize_attempt(attempt_dir):
         generate_figures(attempt_path, raw_data)
     else:
         print("No valid experiments found to summarize")
-
-
-def get_ablation_set(exp_name):
-    """Extract ablation set letter from experiment name."""
-    if exp_name.startswith('A_'):
-        return 'A', exp_name
-    elif exp_name.startswith('B_'):
-        return 'B', exp_name
-    elif exp_name.startswith('C_'):
-        return 'C', exp_name
-    elif exp_name == 'default':
-        return None, exp_name
-    return None, exp_name
 
 
 def generate_figures(attempt_path, raw_data):
@@ -194,14 +189,6 @@ def generate_figures(attempt_path, raw_data):
     figures_dir.mkdir(exist_ok=True)
     print(f"\nGenerating figures in {figures_dir}...")
     
-    # Rename default experiment based on context and organize by ablation set
-    renamed_data = {}
-    for exp_name, data in raw_data.items():
-        if exp_name == 'default':
-            # default will be added to each ablation set based on its dataset
-            continue
-        renamed_data[exp_name] = data
-    
     # Create ablation sets with renamed default experiments
     ablation_sets = {}
     
@@ -210,7 +197,6 @@ def generate_figures(attempt_path, raw_data):
     for exp_name, data in raw_data.items():
         if exp_name.startswith('A_'):
             ablation_sets['A'][exp_name] = data
-    # Add default as A_slo_100
     if 'default' in raw_data:
         ablation_sets['A']['A_slo_100'] = raw_data['default']
     
@@ -219,7 +205,6 @@ def generate_figures(attempt_path, raw_data):
     for exp_name, data in raw_data.items():
         if exp_name.startswith('B_'):
             ablation_sets['B'][exp_name] = data
-    # Add default as B_net_moderate
     if 'default' in raw_data:
         ablation_sets['B']['B_net_moderate'] = raw_data['default']
     
@@ -228,12 +213,19 @@ def generate_figures(attempt_path, raw_data):
     for exp_name, data in raw_data.items():
         if exp_name.startswith('C_'):
             ablation_sets['C'][exp_name] = data
-    # Add default as C_data_fmnist
     if 'default' in raw_data:
         ablation_sets['C']['C_data_fmnist'] = raw_data['default']
     
+    # Add D set experiments
+    ablation_sets['D'] = {}
+    for exp_name, data in raw_data.items():
+        if exp_name.startswith('D_'):
+            ablation_sets['D'][exp_name] = data
+    if 'default' in raw_data and 'D' not in ablation_sets:
+        ablation_sets['D']['D_mu_10'] = raw_data['default']
+    
     # Generate figures for each ablation set
-    for ablation in ['A', 'B', 'C']:
+    for ablation in ['A', 'B', 'C', 'D']:
         if ablation in ablation_sets and ablation_sets[ablation]:
             exps = ablation_sets[ablation]
             
@@ -248,15 +240,17 @@ def generate_figures(attempt_path, raw_data):
             
             # Figure 4: Training Metrics Evolution (loss and accuracy across epochs)
             plot_training_evolution(figures_dir, ablation, exps)
+            
+            # Figure 5: Loss vs Latency Trade-off
+            plot_loss_latency_tradeoff(figures_dir, ablation, exps)
     
     # Generate comparative figures across all ablation sets
     all_experiments = {}
-    all_experiments.update(ablation_sets.get('A', {}))
-    all_experiments.update(ablation_sets.get('B', {}))
-    all_experiments.update(ablation_sets.get('C', {}))
+    for ablation in ['A', 'B', 'C', 'D']:
+        all_experiments.update(ablation_sets.get(ablation, {}))
     
     # Figure 5: All experiments - Accuracy vs Latency
-    plot_all_accuracy_latency_comparison(figures_dir, all_experiments)
+    plot_all_accuracy_latency_comparison(figures_dir, all_experiments, ablation_sets)
     
     # Figure 6: All experiments - Test Accuracy by Set
     plot_all_test_accuracy_by_set(figures_dir, ablation_sets)
@@ -412,37 +406,28 @@ def plot_training_evolution(figures_dir, ablation, experiments):
     print(f"  Saved: set_{ablation}_04_training_evolution.png")
 
 
-def plot_all_accuracy_latency_comparison(figures_dir, all_experiments):
+def plot_all_accuracy_latency_comparison(figures_dir, all_experiments, ablation_sets):
     """Plot accuracy vs latency for all experiments colored by ablation set."""
     fig, ax = plt.subplots(figsize=(12, 7))
     
-    # Define colors for each ablation set
-    set_colors = {'A': '#1f77b4', 'B': '#ff7f0e', 'C': '#2ca02c'}
+    # Define colors and markers for each ablation set
+    set_config = {
+        'A': {'color': '#1f77b4', 'marker': 'o', 'label': 'Set A (SLO Target)'},
+        'B': {'color': '#ff7f0e', 'marker': 's', 'label': 'Set B (Network)'},
+        'C': {'color': '#2ca02c', 'marker': '^', 'label': 'Set C (Dataset)'},
+        'D': {'color': '#d62728', 'marker': 'D', 'label': 'Set D (Mu Penalty)'}
+    }
     
-    for exp_name, data in sorted(all_experiments.items()):
-        if data['test_accuracy'] is not None and data['avg_latency'] is not None:
-            # Determine ablation set from experiment name
-            if exp_name.startswith('A_') or exp_name == 'A_slo_100':
-                color = set_colors['A']
-                set_label = 'Set A (SLO Target)'
-            elif exp_name.startswith('B_') or exp_name == 'B_net_moderate':
-                color = set_colors['B']
-                set_label = 'Set B (Network)'
-            elif exp_name.startswith('C_') or exp_name == 'C_data_fmnist':
-                color = set_colors['C']
-                set_label = 'Set C (Dataset)'
-            else:
-                color = '#808080'
-                set_label = 'Other'
-            
-            # Map set label to marker
-            markers = {'Set A (SLO Target)': 'o', 'Set B (Network)': 's', 'Set C (Dataset)': '^'}
-            marker = markers.get(set_label, 'o')
-            
-            ax.scatter(data['avg_latency'], data['test_accuracy'], s=250, c=color, 
-                      marker=marker, alpha=0.7, edgecolors='black', linewidth=2, label=set_label)
-            ax.annotate(exp_name, (data['avg_latency'], data['test_accuracy']),
-                       xytext=(7, 7), textcoords='offset points', fontsize=9, fontweight='bold')
+    for set_letter in ['A', 'B', 'C', 'D']:
+        if set_letter in ablation_sets:
+            for exp_name, data in sorted(ablation_sets[set_letter].items()):
+                if data['test_accuracy'] is not None and data['avg_latency'] is not None:
+                    config = set_config[set_letter]
+                    ax.scatter(data['avg_latency'], data['test_accuracy'], s=250, 
+                              c=config['color'], marker=config['marker'], alpha=0.7, 
+                              edgecolors='black', linewidth=2, label=config['label'])
+                    ax.annotate(exp_name, (data['avg_latency'], data['test_accuracy']),
+                               xytext=(7, 7), textcoords='offset points', fontsize=8, fontweight='bold')
     
     ax.set_xlabel('Average Latency (ms)', fontsize=12, fontweight='bold')
     ax.set_ylabel('Test Accuracy (%)', fontsize=12, fontweight='bold')
@@ -454,7 +439,8 @@ def plot_all_accuracy_latency_comparison(figures_dir, all_experiments):
     legend_elements = [
         Patch(facecolor='#1f77b4', edgecolor='black', label='Set A (SLO Target)'),
         Patch(facecolor='#ff7f0e', edgecolor='black', label='Set B (Network)'),
-        Patch(facecolor='#2ca02c', edgecolor='black', label='Set C (Dataset)')
+        Patch(facecolor='#2ca02c', edgecolor='black', label='Set C (Dataset)'),
+        Patch(facecolor='#d62728', edgecolor='black', label='Set D (Mu Penalty)')
     ]
     ax.legend(handles=legend_elements, fontsize=11, loc='best')
     
@@ -468,12 +454,12 @@ def plot_all_test_accuracy_by_set(figures_dir, ablation_sets):
     """Plot test accuracy for all experiments grouped by ablation set."""
     fig, ax = plt.subplots(figsize=(14, 7))
     
-    set_colors = {'A': '#1f77b4', 'B': '#ff7f0e', 'C': '#2ca02c'}
+    set_colors = {'A': '#1f77b4', 'B': '#ff7f0e', 'C': '#2ca02c', 'D': '#d62728'}
     x_pos = 0
     tick_positions = []
     tick_labels = []
     
-    for set_letter in ['A', 'B', 'C']:
+    for set_letter in ['A', 'B', 'C', 'D']:
         if set_letter in ablation_sets and ablation_sets[set_letter]:
             exps = sorted(ablation_sets[set_letter].items())
             for exp_name, data in exps:
@@ -494,12 +480,13 @@ def plot_all_test_accuracy_by_set(figures_dir, ablation_sets):
     ax.set_ylim(0, 105)
     ax.grid(True, alpha=0.3, axis='y')
     
-    # Add set separators
+    # Add set legend
     from matplotlib.patches import Patch
     legend_elements = [
         Patch(facecolor='#1f77b4', edgecolor='black', label='Set A (SLO Target)'),
         Patch(facecolor='#ff7f0e', edgecolor='black', label='Set B (Network)'),
-        Patch(facecolor='#2ca02c', edgecolor='black', label='Set C (Dataset)')
+        Patch(facecolor='#2ca02c', edgecolor='black', label='Set C (Dataset)'),
+        Patch(facecolor='#d62728', edgecolor='black', label='Set D (Mu Penalty)')
     ]
     ax.legend(handles=legend_elements, fontsize=11, loc='upper right')
     
@@ -513,7 +500,7 @@ def plot_all_latency_comparison(figures_dir, ablation_sets):
     """Plot average and P95 latency for all experiments grouped by ablation set."""
     fig, ax = plt.subplots(figsize=(14, 7))
     
-    set_colors = {'A': '#1f77b4', 'B': '#ff7f0e', 'C': '#2ca02c'}
+    set_colors = {'A': '#1f77b4', 'B': '#ff7f0e', 'C': '#2ca02c', 'D': '#d62728'}
     x_pos = 0
     tick_positions = []
     tick_labels = []
@@ -524,7 +511,7 @@ def plot_all_latency_comparison(figures_dir, ablation_sets):
     all_x_pos_avg = []
     all_x_pos_p95 = []
     
-    for set_letter in ['A', 'B', 'C']:
+    for set_letter in ['A', 'B', 'C', 'D']:
         if set_letter in ablation_sets and ablation_sets[set_letter]:
             exps = sorted(ablation_sets[set_letter].items())
             for exp_name, data in exps:
@@ -565,7 +552,40 @@ def plot_all_latency_comparison(figures_dir, ablation_sets):
     print(f"  Saved: all_03_latency_all_experiments.png")
 
 
+def plot_loss_latency_tradeoff(figures_dir, ablation, experiments):
+    """Plot loss vs latency trade-off for an ablation set."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    exp_names = []
+    losses = []
+    avg_lats = []
+    colors = plt.cm.Set2(np.linspace(0, 1, len(experiments)))
+    
+    for i, (exp_name, data) in enumerate(sorted(experiments.items())):
+        if data['loss'] is not None and data['avg_latency'] is not None:
+            exp_names.append(exp_name)
+            losses.append(data['loss'])
+            avg_lats.append(data['avg_latency'])
+    
+    scatter = ax.scatter(avg_lats, losses, s=200, c=colors, alpha=0.7, edgecolors='black', linewidth=2)
+    
+    # Add labels to points
+    for i, exp_name in enumerate(exp_names):
+        ax.annotate(exp_name, (avg_lats[i], losses[i]), 
+                   xytext=(5, 5), textcoords='offset points', fontsize=9)
+    
+    ax.set_xlabel('Average Latency (ms)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Loss', fontsize=12, fontweight='bold')
+    ax.set_title(f'Ablation Set {ablation}: Loss vs Latency Trade-off', fontsize=14, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(figures_dir / f'set_{ablation}_05_loss_vs_latency.png', dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"  Saved: set_{ablation}_05_loss_vs_latency.png")
+
+
 if __name__ == "__main__":
-    # Path to attempt_1 directory
-    attempt_1_path = Path(__file__).parent / "experiments" / "attempt_1"
-    summarize_attempt(attempt_1_path)
+    # Path to attempt_ directory
+    attempt_path = Path(__file__).parent / "experiments" / "attempt_2"
+    summarize_attempt(attempt_path)

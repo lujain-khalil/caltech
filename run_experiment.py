@@ -29,16 +29,20 @@ def main():
     parser.add_argument("--bw_mbps", type=float, default=15.0)
     
     # Loss Weights
-    parser.add_argument("--lambda_lat", type=float, default=2.0)
+    parser.add_argument("--lambda_lat", type=float, default=3.0)
     parser.add_argument("--mu_slo", type=float, default=10.0)
+
+    # Hardware profile / edge slowdown (for ablation E / logging)
+    parser.add_argument("--profile_file", type=str, default="latency_profile.json")
+    parser.add_argument("--edge_slowdown", type=float, default=20.0)
     
     args = parser.parse_args()
 
     # 1. Load Universal Profile
-    profile_file = "latency_profile.json"
+    profile_file = args.profile_file
     
     if not os.path.exists(profile_file):
-        print(f"Error: {profile_file} not found. Run profile_env.py first.")
+        print(f"Error: {profile_file} not found. Run profile_env.py first or pass correct --profile_file.")
         sys.exit(1)
 
     print(f"Loading Universal Profile: {profile_file}")
@@ -63,7 +67,8 @@ def main():
         "lambda_lat": args.lambda_lat,
         "mu_slo": args.mu_slo,
         "temp_start": 5.0,
-        "temp_end": 0.1
+        "temp_end": 0.1,
+        "edge_slowdown": args.edge_slowdown,
     }
     
     with open(os.path.join(run_dir, "config.json"), "w") as f:
@@ -76,7 +81,7 @@ def main():
     # Init Model
     # ALWAYS use input_channels=3 because we duplicate grayscale channels
     backbone = SplittableResNet18(num_classes=10, input_channels=3, pretrained=True)
-    model = DeploymentAwareResNet(backbone, num_classes=10, exit_points=[1, 3])
+    model = DeploymentAwareResNet(backbone, num_classes=10, exit_points=[2, 4])
     
     config['model_instance'] = model
 

@@ -85,15 +85,31 @@ def train_model(config, profiles, net_sim, device, save_dir):
         avg_acc = 100. * correct / total_samples
         avg_lat_ms = (total_latency / len(train_loader)) * 1000
         
-        # Determine best split
+        # Determine best split and full split distribution
         with torch.no_grad():
             split_probs_soft = torch.nn.functional.softmax(model.split_logits, dim=0)
             best_split = torch.argmax(split_probs_soft).item()
             split_conf = split_probs_soft[best_split].item()
+            split_probs_list = split_probs_soft.detach().cpu().tolist()
 
-        # Calculate Average Exit Probabilities
-        avg_exit_probs = [np.mean(exit_prob_tracker[k]) for k in sorted(exit_prob_tracker.keys())]
-        probs_str = str([f"{p:.2f}" for p in avg_exit_probs])
+            # Exit thresholds/scales per block index
+            sorted_exits = sorted(model.exit_points)
+            exit_thresholds = {}
+            exit_scales = {}
+            for idx, block_idx in enumerate(sorted_exits):
+                exit_thresholds[int(block_idx)] = float(model.exit_threshold[idx].item())
+                exit_scales[int(block_idx)] = float(model.exit_scale[idx].item())
+
+        # Calculate Average Exit Probabilities (per head)
+        avg_exit_probs = {}
+        for k in sorted(exit_prob_tracker.keys()):
+            if len(exit_prob_tracker[k]) > 0:
+                avg_exit_probs[int(k)] = float(np.mean(exit_prob_tracker[k]))
+            else:
+                avg_exit_probs[int(k)] = 0.0
+
+        probs_str = str([f"{avg_exit_probs[int(k)]:.2f}" for k in sorted(exit_prob_tracker.keys())])
+        normalized_latency = (avg_lat_ms / (slo_target * 1000.0)) if slo_target > 0 else 0.0
 
         print(f"{epoch+1:<6} | {avg_acc:<7.1f}% | {avg_lat_ms:<9.2f} ms | Block {best_split} ({split_conf:.2f}) | {probs_str}")
 
@@ -102,9 +118,13 @@ def train_model(config, profiles, net_sim, device, save_dir):
             "epoch": epoch + 1,
             "accuracy": avg_acc,
             "latency_ms": avg_lat_ms,
+            "normalized_latency": normalized_latency,
             "split_decision": best_split,
             "split_confidence": split_conf,
-            "exit_probs": avg_exit_probs,
+            "split_probs": split_probs_list,
+            "exit_probs_avg": avg_exit_probs,
+            "exit_thresholds": exit_thresholds,
+            "exit_scales": exit_scales,
             "loss": total_loss / len(train_loader)
         }
         training_history.append(log_entry)

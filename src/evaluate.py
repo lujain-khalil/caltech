@@ -41,6 +41,10 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
     latencies = []
     exit_counts = {k: 0 for k in model.exit_points}  # How many times did we exit at each point?
     exit_counts['final'] = 0
+
+    # Track confidence values for samples that actually exit at each head
+    exit_conf_values = {k: [] for k in model.exit_points}
+
     
     # 1. Determine the Fixed Split Point (The one with highest logit)
     split_probs = F.softmax(model.split_logits, dim=0)
@@ -98,14 +102,6 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
                     confidence, _ = torch.max(F.softmax(exit_out, dim=1), dim=1)
                     
                     # Get Thresholds
-                    # We need to find which index in exit_scale corresponds to block i
-                    # Since exit_points is a set/list, we need the index mapping
-                    # Assuming exit_points passed to model were sorted or we can find index
-                    # Let's rely on the model finding it. 
-                    # Note: In deployment_model.py, we iterated. Here we need to map i -> param_index
-                    # Simplification: We access parameters directly if we stored mapping, 
-                    # but for now let's grab the raw params from the list logic.
-                    # We'll assume exit_points were [1, 3] so index 0 is 1, index 1 is 3.
                     ex_idx = sorted(list(model.exit_points)).index(i)
                     gamma = model.exit_scale[ex_idx]
                     tau = model.exit_threshold[ex_idx]
@@ -122,7 +118,12 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
                         # Update counts
                         count = should_exit.sum().item()
                         exit_counts[i] += count
-                        
+
+                        # Log confidences for those who actually exited here
+                        exit_conf_values[i].extend(
+                            confidence[should_exit].detach().cpu().tolist()
+                        )
+
                         # Mark as exited
                         exited_mask = exited_mask | should_exit
 
@@ -132,9 +133,11 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
                 x_final = model.backbone.avgpool(x)
                 x_final = torch.flatten(x_final, 1)
                 out_final = model.backbone.fc(x_final)
-                
-                final_preds[~exited_mask] = out_final
-                exit_counts['final'] += (~exited_mask).sum().item()
+
+                # Only assign predictions for the samples that haven't exited
+                remaining = ~exited_mask
+                final_preds[remaining] = out_final[remaining]
+                exit_counts['final'] += remaining.sum().item()
             
             # Compute Accuracy
             preds = final_preds.argmax(dim=1)
@@ -149,12 +152,64 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
     avg_latency = np.mean(latencies) * 1000 # to ms
     p95_latency = np.percentile(latencies, 95) * 1000
     
+    # Exit rates (fraction of samples)
+    exit_rates = {}
+    for k, v in exit_counts.items():
+        exit_rates[str(k)] = v / total_samples
+
+    # Exit thresholds and scales per head
+    sorted_exits = sorted(model.exit_points)
+    exit_thresholds = {}
+    exit_scales = {}
+    for idx, block_idx in enumerate(sorted_exits):
+        exit_thresholds[int(block_idx)] = float(model.exit_threshold[idx].item())
+        exit_scales[int(block_idx)] = float(model.exit_scale[idx].item())
+
+    # Confidence stats for samples that actually exited at each head
+    exit_conf_stats = {}
+    for k in model.exit_points:
+        vals = exit_conf_values[k]
+        if len(vals) > 0:
+            exit_conf_stats[int(k)] = {
+                "mean_conf_exit": float(np.mean(vals)),
+                "min_conf_exit": float(np.min(vals)),
+                "max_conf_exit": float(np.max(vals)),
+                "num_exited": int(len(vals))
+            }
+        else:
+            exit_conf_stats[int(k)] = {
+                "mean_conf_exit": None,
+                "min_conf_exit": None,
+                "max_conf_exit": None,
+                "num_exited": 0
+            }
+
+    # Split probs snapshot used during evaluation
+    split_probs_list = split_probs.detach().cpu().tolist()
+
+    # Edge slowdown (approx from profiles)
+    edge_slowdown = profiles["block_0"]["edge_time_sec"] / profiles["block_0"]["cloud_time_sec"]
+
+    # Network config from simulator
+    net_avg_bw_mbps = getattr(net_sim, "avg_bw", None)
+    net_avg_rtt_ms = getattr(net_sim, "avg_rtt", None)
+
     results = {
         "test_accuracy": accuracy,
         "avg_latency_ms": avg_latency,
         "p95_latency_ms": p95_latency,
         "exit_distribution": exit_counts,
-        "split_point": split_point
+        "exit_rates": exit_rates,
+        "split_point": split_point,
+        "split_probs": split_probs_list,
+        "exit_thresholds": exit_thresholds,
+        "exit_scales": exit_scales,
+        "exit_confidence_stats": exit_conf_stats,
+        "num_samples": total_samples,
+        "dataset": dataset_name_lower,
+        "edge_slowdown": edge_slowdown,
+        "net_avg_bw_mbps": net_avg_bw_mbps,
+        "net_avg_rtt_ms": net_avg_rtt_ms,
     }
     
     return results
