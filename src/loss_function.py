@@ -141,6 +141,17 @@ class SLOAwareLoss(nn.Module):
         # Calculate violation: ReLU(Latency - Target)
         violation = torch.relu(normalized_latency - 1.0)
         
+        # # Encourage earlier exits *only when we're violating the SLO*
+        # sorted_exits = sorted(exit_preds.keys())
+        # earliest_exit_block = sorted_exits[0]
+        # p_early_mean = exit_prob_means[earliest_exit_block]  # already computed scalar tensor
+
+        # slo_pressure = violation.detach()  # or leave it in-graph if you want
+        # beta_early = 5.0  # tune this hyperparameter
+
+        # # If violation > 0, we penalize not exiting early:
+        # early_exit_penalty = beta_early * slo_pressure * (1.0 - p_early_mean)
+
         # TOTAL LOSS
         # We verify that violation > 0 before applying penalty to avoid gradient noise
         total_loss = ( 

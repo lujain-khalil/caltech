@@ -12,7 +12,7 @@ class DeploymentAwareResNet(nn.Module):
         super().__init__()
         self.backbone = backbone
         self.exit_points = set(exit_points)
-        self.num_blocks = len(backbone.blocks - 1)
+        self.num_blocks = len(backbone.blocks) - 1
         
         # 1. EARLY EXIT HEADS
         # We need to know the input size for the exit heads. 
