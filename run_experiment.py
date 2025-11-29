@@ -39,7 +39,6 @@ def main():
     parser.add_argument("--attempt_num", type=str, default="0")
     
     args = parser.parse_args()
-    print(f"DEBUG run_experiment.py.py main(): --attempt_num = {args.attempt_num}")
 
     # 1. Load Universal Profile
     profile_file = args.profile_file

@@ -28,14 +28,10 @@ def main(attempt_num = None):
     if attempt_num is None:
         print("Attempt number not provided. Set number in main.py __main__.")
         sys.exit(1)
-    print(f"DEBUG main.py main(): attempt_num = {attempt_num}")
 
     print("### AUTOMATED ABLATION RUNNER ###")
     print("This script will run Profiling + Ablation Studies")
     
-    # 1. Hardware Profiling (Run once)
-    run_command(["profile_env.py"], "Hardware Profiling (Universal 3-Channel) with default edge_slowdown=20.0)")
-
     # --- EXPERIMENT CONFIGURATIONS ---
     default_slo = 70
     default_rtt = 50
@@ -43,6 +39,10 @@ def main(attempt_num = None):
     default_mu = 10.0
     default_data = "fmnist"
     default_slowdown = 20.0
+
+    # 1. Hardware Profiling (Run once)
+    run_command(["profile_env.py"], f"Hardware Profiling for default EDGE_SLOWDOWN={default_slowdown}")
+
 
     default_experiment = [
         {"name": "default", "slo": default_slo, "rtt": default_rtt, "bw": default_bw, "data": default_data, "mu": default_mu, "edge_slowdown": default_slowdown}, # Baseline
@@ -121,5 +121,4 @@ def main(attempt_num = None):
 
 if __name__ == "__main__":
     attempt = 5
-    print(f"DEBUG main.py __main__: attempt_num = {attempt}")
     main(attempt_num=attempt)
