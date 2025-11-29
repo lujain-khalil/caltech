@@ -35,8 +35,11 @@ def main():
     # Hardware profile / edge slowdown (for ablation E / logging)
     parser.add_argument("--profile_file", type=str, default="latency_profile.json")
     parser.add_argument("--edge_slowdown", type=float, default=20.0)
+
+    parser.add_argument("--attempt_num", type=str, default="0")
     
     args = parser.parse_args()
+    print(f"DEBUG run_experiment.py.py main(): --attempt_num = {args.attempt_num}")
 
     # 1. Load Universal Profile
     profile_file = args.profile_file
@@ -52,8 +55,9 @@ def main():
     profiles['dataset_used'] = args.dataset
 
     # 2. Setup Directory
-    run_dir = os.path.join("experiments", f"{args.exp_name}")
+    run_dir = os.path.join("experiments", f"attempt_{args.attempt_num}", f"{args.exp_name}")
     os.makedirs(run_dir, exist_ok=True)
+    print(f"Experiment Directory: {run_dir}")
     
     # Config
     config = {

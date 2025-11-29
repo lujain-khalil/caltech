@@ -24,7 +24,12 @@ def run_command(command, description):
         # Optional: Stop execution on error
         # sys.exit(1)
 
-def main():
+def main(attempt_num = None):
+    if attempt_num is None:
+        print("Attempt number not provided. Set number in main.py __main__.")
+        sys.exit(1)
+    print(f"DEBUG main.py main(): attempt_num = {attempt_num}")
+
     print("### AUTOMATED ABLATION RUNNER ###")
     print("This script will run Profiling + Ablation Studies")
     
@@ -103,6 +108,7 @@ def main():
             "--epochs", "30", # Standardized on 30 epochs for convergence
             "--edge_slowdown", str(edge_slow),
             "--profile_file", profile_file,
+            "--attempt_num", str(attempt_num),
         ]
         
         step_desc = f"Experiment {i+1}/{len(all_experiments)}: {exp['name']}"
@@ -114,4 +120,6 @@ def main():
     print("="*60)
 
 if __name__ == "__main__":
-    main()
+    attempt = 5
+    print(f"DEBUG main.py __main__: attempt_num = {attempt}")
+    main(attempt_num=attempt)
