@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class DeploymentAwareResNet(nn.Module):
-    def __init__(self, backbone, num_classes=10, exit_points=[1, 3]):
+    def __init__(self, backbone, num_classes=10, exit_points=[1, 2, 3]):
         """
         backbone: The SplittableResNet18 instance
         exit_points: Indices of blocks after which we attach an early exit.
@@ -12,7 +12,7 @@ class DeploymentAwareResNet(nn.Module):
         super().__init__()
         self.backbone = backbone
         self.exit_points = set(exit_points)
-        self.num_blocks = len(backbone.blocks)
+        self.num_blocks = len(backbone.blocks - 1)
         
         # 1. EARLY EXIT HEADS
         # We need to know the input size for the exit heads. 

@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.001)
     
     # SLO & Network Settings
-    parser.add_argument("--slo_ms", type=float, default=100.0)
+    parser.add_argument("--slo_ms", type=float, default=70.0)
     parser.add_argument("--rtt_ms", type=float, default=50.0)
     parser.add_argument("--bw_mbps", type=float, default=15.0)
     
@@ -81,7 +81,7 @@ def main():
     # Init Model
     # ALWAYS use input_channels=3 because we duplicate grayscale channels
     backbone = SplittableResNet18(num_classes=10, input_channels=3, pretrained=True)
-    model = DeploymentAwareResNet(backbone, num_classes=10, exit_points=[2, 4])
+    model = DeploymentAwareResNet(backbone, num_classes=10)
     
     config['model_instance'] = model
 

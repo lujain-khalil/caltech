@@ -69,27 +69,16 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
             # --- EDGE EXECUTION ---
             current_latency = torch.zeros(batch_curr_size, device=device)
             
+            num_blocks = len(model.backbone.blocks)
             for i, block in enumerate(model.backbone.blocks):
                 
-                # Check if we crossed the split point -> Add Communication Latency
-                if i == split_point:
-                    # Calc Comm Time
-                    data_size = profiles[f"block_{i-1}"]["output_bytes"] if i > 0 else profiles["block_0"]["output_bytes"] # Approx
-                    t_comm = net_sim.estimate_transmission_time(data_size, bw, rtt)
-                    
-                    # Add comm time only to those who haven't exited yet
-                    current_latency[~exited_mask] += t_comm
-
-                # Execute Block
-                # If on edge (i <= split), add edge time. If cloud (i > split), add cloud time.
                 hw_key = f"block_{i}"
                 if i <= split_point:
                     exec_time = profiles[hw_key]["edge_time_sec"]
                 else:
                     exec_time = profiles[hw_key]["cloud_time_sec"]
                 
-                # Only run computation for samples that haven't exited
-                # (In PyTorch we usually run the whole batch, but we logically account for latency)
+                # 1. Run the block (only latency charged to survivors)
                 current_latency[~exited_mask] += exec_time
                 x = block(x)
 
@@ -106,9 +95,8 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
                     gamma = model.exit_scale[ex_idx]
                     tau = model.exit_threshold[ex_idx]
                     
+                     # HARD DECISION: Exit if p > 0.5
                     p_exit = torch.sigmoid((confidence - tau) * gamma)
-                    
-                    # HARD DECISION: Exit if p > 0.5
                     should_exit = (p_exit > 0.5) & (~exited_mask)
                     
                     if should_exit.any():
@@ -126,6 +114,15 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
 
                         # Mark as exited
                         exited_mask = exited_mask | should_exit
+                
+                # Check if we crossed the split point -> Add Communication Latency
+                if i == split_point and (split_point < num_blocks - 1):
+                    # Calc Comm Time
+                    data_size = profiles[f"block_{i-1}"]["output_bytes"]
+                    t_comm = net_sim.estimate_transmission_time(data_size, bw, rtt)
+                    
+                    # Add comm time only to those who haven't exited yet
+                    current_latency[~exited_mask] += t_comm
 
             # --- FINAL CLASSIFIER (Cloud) ---
             # If anyone is left
