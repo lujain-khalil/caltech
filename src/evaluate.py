@@ -50,7 +50,10 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
     split_probs = F.softmax(model.split_logits, dim=0)
     split_point = torch.argmax(split_probs).item()
     
-    print(f"Running Evaluation on {dataset_name_lower.upper()}. Fixed Split Point: Block {split_point}")
+    split_idx = torch.argmax(split_probs).item()
+    split_block = model.split_candidates[split_idx]
+
+    print(f"Running Evaluation on {dataset_name_lower.upper()}. Fixed Split Point: split_idx={split_idx}, block={split_block}")
 
 
     with torch.no_grad():
@@ -73,7 +76,7 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
             for i, block in enumerate(model.backbone.blocks):
                 
                 hw_key = f"block_{i}"
-                if i <= split_point:
+                if i <= split_block:
                     exec_time = profiles[hw_key]["edge_time_sec"]
                 else:
                     exec_time = profiles[hw_key]["cloud_time_sec"]
@@ -116,9 +119,9 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
                         exited_mask = exited_mask | should_exit
                 
                 # Check if we crossed the split point -> Add Communication Latency
-                if i == split_point and (split_point < num_blocks - 1):
+                if i == split_block and (split_block < num_blocks - 1):
                     # Calc Comm Time
-                    data_size = profiles[f"block_{i-1}"]["output_bytes"]
+                    data_size = profiles[f"block_{i}"]["output_bytes"]
                     t_comm = net_sim.estimate_transmission_time(data_size, bw, rtt)
                     
                     # Add comm time only to those who haven't exited yet
@@ -198,6 +201,8 @@ def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batc
         "exit_distribution": exit_counts,
         "exit_rates": exit_rates,
         "split_point": split_point,
+        "split_block": int(split_block),
+        "split_idx": int(split_idx),
         "split_probs": split_probs_list,
         "exit_thresholds": exit_thresholds,
         "exit_scales": exit_scales,

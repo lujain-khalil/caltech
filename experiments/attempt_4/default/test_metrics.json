@@ -1,5 +1,5 @@
 {
-    "test_accuracy": 92.09,
+    "test_accuracy": 92.07,
     "avg_latency_ms": 30.893702059984207,
     "p95_latency_ms": 30.893702059984207,
     "exit_distribution": {
@@ -18,7 +18,7 @@
     "split_probs": [
         7.285904657372555e-10,
         3.597564190993552e-10,
-        7.5090529207955115e-06,
+        7.509053375542862e-06,
         0.9999924898147583
     ],
     "exit_thresholds": {
@@ -39,8 +39,8 @@
             "num_exited": 0
         },
         "2": {
-            "mean_conf_exit": 0.9774030677169562,
-            "min_conf_exit": 0.3358229994773865,
+            "mean_conf_exit": 0.9774054065346718,
+            "min_conf_exit": 0.3365301787853241,
             "max_conf_exit": 1.0,
             "num_exited": 10000
         },

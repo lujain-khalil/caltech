@@ -105,7 +105,7 @@ def main(attempt_num = None):
             "--rtt_ms", str(exp["rtt"]),
             "--bw_mbps", str(exp["bw"]),
             "--mu_slo", str(exp["mu"]), 
-            "--epochs", "30", # Standardized on 30 epochs for convergence
+            "--epochs", "15", # Standardized on 30 epochs for convergence
             "--edge_slowdown", str(edge_slow),
             "--profile_file", profile_file,
             "--attempt_num", str(attempt_num),

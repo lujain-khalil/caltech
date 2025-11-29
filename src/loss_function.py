@@ -78,7 +78,9 @@ class SLOAwareLoss(nn.Module):
         #                + p_final_mean * T(s, exit_at_final) ]
         
         # 1. Calculate Latency for EVERY possible split point s
-        num_blocks = len(split_probs)
+        block_keys = sorted(k for k in self.profiles.keys() if k.startswith("block_"))
+        num_blocks = len(block_keys)
+        
         device = split_probs.device
 
         edge_times = []
@@ -90,6 +92,8 @@ class SLOAwareLoss(nn.Module):
             edge_times.append(block_profile["edge_time_sec"])
             cloud_times.append(block_profile["cloud_time_sec"])
             out_sizes.append(block_profile["output_bytes"])
+
+        final_block = num_blocks - 1  # 4
         
         def latency_for_split_and_exit(s, exit_b):
             # 1) edge compute
@@ -113,7 +117,9 @@ class SLOAwareLoss(nn.Module):
         final_block = num_blocks - 1
 
         candidate_latencies = []
-        for s in range(num_blocks):
+        num_splits = split_probs.size(0)  # e.g., 4 (split after 0,1,2,3)
+
+        for s in range(num_splits):
             # Latency if we exit at each head given this split s
             total_t_s = 0.0
 
@@ -142,12 +148,12 @@ class SLOAwareLoss(nn.Module):
         violation = torch.relu(normalized_latency - 1.0)
         
         # # Encourage earlier exits *only when we're violating the SLO*
-        sorted_exits = sorted(exit_preds.keys())
-        earliest_exit_block = sorted_exits[0]
-        p_early_mean = exit_prob_means[earliest_exit_block]  # already computed scalar tensor
+        # sorted_exits = sorted(exit_preds.keys())
+        # earliest_exit_block = sorted_exits[0]
+        # p_early_mean = exit_prob_means[earliest_exit_block]  # already computed scalar tensor
 
-        slo_pressure = violation.detach()  # or leave it in-graph if you want
-        beta_early = 5.0  # tune this hyperparameter
+        # slo_pressure = violation.detach()  # or leave it in-graph if you want
+        # beta_early = 5.0  # tune this hyperparameter
         
         # TOTAL LOSS
         # We verify that violation > 0 before applying penalty to avoid gradient noise
@@ -155,7 +161,7 @@ class SLOAwareLoss(nn.Module):
             total_acc_loss
             + (self.lambda_lat * normalized_latency)
             + (self.mu_slo * violation)
-            + beta_early * slo_pressure * (1.0 - p_early_mean)
+            # + beta_early * slo_pressure * (1.0 - p_early_mean)
         )
                      
         return total_loss, expected_latency.item(), total_acc_loss.item()

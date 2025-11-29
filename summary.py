@@ -1066,5 +1066,5 @@ def plot_slo_vs_p95_latency(figures_dir, ablation_sets, set_styles):
 
 if __name__ == "__main__":
     # Path to attempt_ directory (adjust as needed)
-    attempt_path = Path(__file__).parent / "experiments" / "attempt_3"
+    attempt_path = Path(__file__).parent / "experiments" / "attempt_0"
     summarize_attempt(attempt_path)

@@ -12,7 +12,7 @@ class DeploymentAwareResNet(nn.Module):
         super().__init__()
         self.backbone = backbone
         self.exit_points = set(exit_points)
-        self.num_blocks = len(backbone.blocks) - 1
+        self.num_blocks = len(backbone.blocks)
         
         # 1. EARLY EXIT HEADS
         # We need to know the input size for the exit heads. 
@@ -32,7 +32,8 @@ class DeploymentAwareResNet(nn.Module):
         # 2. SPLIT POINT LOGITS
         # We have K candidate split points (between blocks).
         # Logits z_1 ... z_K learn the preference for splitting at each point.
-        self.split_logits = nn.Parameter(torch.zeros(self.num_blocks))
+        self.split_candidates = [0, 1, 2, 3]
+        self.split_logits = nn.Parameter(torch.zeros(len(self.split_candidates)))
         
         # 3. EXIT THRESHOLD SCALING (Learnable gamma from paper)
         # Gamma controls the sharpness of the sigmoid for exit probability
