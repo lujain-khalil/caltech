@@ -34,7 +34,7 @@ def main(attempt_num = None):
     print("This script will run Profiling + Ablation Studies")
 
     # 1. Hardware Profiling (Run once)
-    run_command(["profile_env.py"], f"Hardware Profiling for default EDGE_SLOWDOWN={Config.DEFAULT_SLOWDOWN}")
+    # run_command(["profile_env.py"], f"Hardware Profiling for default EDGE_SLOWDOWN={Config.DEFAULT_SLOWDOWN}")
 
     default_experiment = [
         {"name": "default", "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Baseline
