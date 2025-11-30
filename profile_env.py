@@ -4,8 +4,9 @@ import json
 import numpy as np
 import argparse
 from src.resnet_split import SplittableResNet18
+import src.config as Config
 
-def profile_hardware(filename="latency_profile.json", edge_slowdown=20.0):
+def profile_hardware(filename="latency_profile.json", edge_slowdown=Config.DEFAULT_SLOWDOWN):
     # Since we are duplicating channels for MNIST/FMNIST, 
     # we ONLY profile for 3 channels (RGB) configuration.
     channels = 3
@@ -28,7 +29,7 @@ def profile_hardware(filename="latency_profile.json", edge_slowdown=20.0):
         x = dummy_input
         for i, block in enumerate(model.blocks):
             times = []
-            for _ in range(50): # 50 runs for stability
+            for _ in range(100): # 50 runs for stability
                 start = time.perf_counter()
                 out = block(x)
                 end = time.perf_counter()
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Profile hardware for edge/cloud ResNet blocks")
     parser.add_argument("--output", type=str, default="latency_profile.json",
                         help="Output JSON filename for latency profile.")
-    parser.add_argument("--edge_slowdown", type=float, default=20.0,
+    parser.add_argument("--edge_slowdown", type=float, default=Config.DEFAULT_SLOWDOWN,
                         help="Factor by which edge is slower than cloud.")
     args = parser.parse_args()
 

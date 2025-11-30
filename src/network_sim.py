@@ -1,7 +1,8 @@
 import numpy as np
+from . import config as Config
 
 class NetworkSimulator:
-    def __init__(self, avg_bw_mbps=15.0, std_bw=3.0, avg_rtt_ms=50, std_rtt=10):
+    def __init__(self, avg_bw_mbps=Config.DEFAULT_BW, std_bw=3.0, avg_rtt_ms=Config.DEFAULT_RTT, std_rtt=10):
         """
         Simulates network conditions.
         avg_bw_mbps: Average Bandwidth in Megabits per second

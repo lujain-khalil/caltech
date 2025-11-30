@@ -2,6 +2,7 @@ import subprocess
 import sys
 import time
 import os
+import src.config as Config
 
 def run_command(command, description):
     """
@@ -31,50 +32,39 @@ def main(attempt_num = None):
 
     print("### AUTOMATED ABLATION RUNNER ###")
     print("This script will run Profiling + Ablation Studies")
-    
-    # --- EXPERIMENT CONFIGURATIONS ---
-    default_slo = 70
-    default_rtt = 50
-    default_bw = 15
-    default_mu = 10.0
-    default_data = "fmnist"
-    default_slowdown = 20.0
 
     # 1. Hardware Profiling (Run once)
-    run_command(["profile_env.py"], f"Hardware Profiling for default EDGE_SLOWDOWN={default_slowdown}")
-
+    run_command(["profile_env.py"], f"Hardware Profiling for default EDGE_SLOWDOWN={Config.DEFAULT_SLOWDOWN}")
 
     default_experiment = [
-        {"name": "default", "slo": default_slo, "rtt": default_rtt, "bw": default_bw, "data": default_data, "mu": default_mu, "edge_slowdown": default_slowdown}, # Baseline
+        {"name": "default", "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Baseline
     ]
 
     # ABLATION A: SLO SENSITIVITY
     ablation_a = [
-        {"name": "A_slo_100", "slo": 100, "rtt": default_rtt, "bw": default_bw, "data": default_data, "mu": default_mu, "edge_slowdown": default_slowdown}, # Relaxed
-        {"name": "A_slo_060",  "slo": 60, "rtt": default_rtt, "bw": default_bw, "data": default_data, "mu": default_mu, "edge_slowdown": default_slowdown},
-        {"name": "A_slo_040",  "slo": 40, "rtt": default_rtt, "bw": default_bw, "data": default_data, "mu": default_mu, "edge_slowdown": default_slowdown}, # Stress Test
+        {"name": "A_slo_100", "slo": 100, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Relaxed
+        {"name": "A_slo_060",  "slo": 60, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN},
+        {"name": "A_slo_040",  "slo": 40, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Stress Test
     ]
 
     # ABLATION B: NETWORK CONDITIONS
     ablation_b = [
-        {"name": "B_net_fast",       "slo": default_slo, "rtt": 10,  "bw": 50, "data": default_data, "mu": default_mu, "edge_slowdown": default_slowdown}, # 5G
-        {"name": "B_net_slow",       "slo": default_slo, "rtt": 75,  "bw": 3,  "data": default_data, "mu": default_mu, "edge_slowdown": default_slowdown}, # 3G
-        {"name": "B_net_impossible", "slo": default_slo, "rtt": 500, "bw": 1,  "data": default_data, "mu": default_mu, "edge_slowdown": default_slowdown}, # Satellite
+        {"name": "B_net_fast",       "slo": Config.DEFAULT_SLO, "rtt": 10,  "bw": 50, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # 5G
+        {"name": "B_net_slow",       "slo": Config.DEFAULT_SLO, "rtt": 75,  "bw": 3,  "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # 3G
+        {"name": "B_net_impossible", "slo": Config.DEFAULT_SLO, "rtt": 500, "bw": 1,  "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Satellite
     ]
 
     # ABLATION C: DATASET DIFFICULTY
     ablation_c = [
-        {"name": "C_data_mnist", "slo": default_slo, "rtt": default_rtt, "bw": default_bw, "data": "mnist",   "mu": default_mu, "edge_slowdown": default_slowdown},
-        {"name": "C_data_cifar", "slo": default_slo, "rtt": default_rtt, "bw": default_bw, "data": "cifar10", "mu": default_mu, "edge_slowdown": default_slowdown},
+        {"name": "C_data_mnist", "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": "mnist",   "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN},
+        {"name": "C_data_cifar10", "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": "cifar10", "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN},
     ]
 
     # ABLATION D: EDGE SLOWDOWN SENSITIVITY
-    # Here we vary the edge slowdown factor used during profiling.
-    # Each experiment will get its own latency_profile JSON.
     ablation_d = [
-        {"name": "D_edge_003",   "slo": default_slo, "rtt": default_rtt, "bw": default_bw, "data": default_data, "mu": default_mu, "edge_slowdown": 3.0},
-        {"name": "D_edge_050",  "slo": default_slo, "rtt": default_rtt, "bw": default_bw, "data": default_data, "mu": default_mu, "edge_slowdown": 50.0},
-        {"name": "D_edge_100", "slo": default_slo, "rtt": default_rtt, "bw": default_bw, "data": default_data, "mu": default_mu, "edge_slowdown": 100.0},
+        {"name": "D_edge_003",   "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": 3.0},
+        {"name": "D_edge_050",  "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": 50.0},
+        {"name": "D_edge_100", "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": 100.0},
     ]
 
     # Combine all lists
@@ -88,7 +78,7 @@ def main(attempt_num = None):
 
         # If this experiment is part of ablation D, re-profile with a custom slowdown
         edge_slow = exp["edge_slowdown"]
-        if edge_slow != default_slowdown:
+        if edge_slow != Config.DEFAULT_SLOWDOWN:
             edge_slow = exp["edge_slowdown"]
             profile_file = f"latency_profile_edge_{edge_slow}.json"
 
@@ -105,10 +95,9 @@ def main(attempt_num = None):
             "--rtt_ms", str(exp["rtt"]),
             "--bw_mbps", str(exp["bw"]),
             "--mu_slo", str(exp["mu"]), 
-            "--epochs", "15", # Standardized on 30 epochs for convergence
+            "--epochs", str(Config.DEFAULT_EPOCHS), # Standardized on 30 epochs for convergence
             "--edge_slowdown", str(edge_slow),
             "--profile_file", profile_file,
-            "--attempt_num", str(attempt_num),
         ]
         
         step_desc = f"Experiment {i+1}/{len(all_experiments)}: {exp['name']}"
@@ -117,8 +106,6 @@ def main(attempt_num = None):
     print("\n" + "="*60)
     print("ALL EXPERIMENTS COMPLETED.")
     print("Results are stored in the 'experiments/' directory.")
-    print("="*60)
 
 if __name__ == "__main__":
-    attempt = 5
-    main(attempt_num=attempt)
+    main()

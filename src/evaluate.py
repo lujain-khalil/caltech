@@ -3,8 +3,10 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 import numpy as np
 from .data_utils import get_dataloaders
+from . import config as Config
 
-def evaluate_model(model, net_sim, profiles, device, dataset_name="fmnist", batch_size=64):
+def evaluate_model(model, net_sim, profiles, device, 
+                   dataset_name=Config.DEFAULT_DATASET, batch_size=Config.DEFAULT_BATCH_SIZE):
     """
     Simulates inference on the test set.
     

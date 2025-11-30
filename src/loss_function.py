@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from . import config as Config
 
 class SLOAwareLoss(nn.Module):
-    def __init__(self, profiles, network_sim, slo_target_sec=0.1, alpha_cvar=0.05, lambda_lat=2.0, mu_slo=10.0):
+    def __init__(self, profiles, network_sim, slo_target_sec=0.1, alpha_cvar=0.05, 
+                 lambda_lat=Config.DEFAULT_LAMBDA_LAT, mu_slo=Config.DEFAULT_MU):
         super().__init__()
         self.profiles = profiles # The Loaded JSON
         self.net_sim = network_sim
@@ -145,15 +147,7 @@ class SLOAwareLoss(nn.Module):
         normalized_latency = expected_latency / (self.slo_target + self.epsilon)
 
         # Calculate violation: ReLU(Latency - Target)
-        violation = torch.relu(normalized_latency - 1.0)
-        
-        # # Encourage earlier exits *only when we're violating the SLO*
-        # sorted_exits = sorted(exit_preds.keys())
-        # earliest_exit_block = sorted_exits[0]
-        # p_early_mean = exit_prob_means[earliest_exit_block]  # already computed scalar tensor
-
-        # slo_pressure = violation.detach()  # or leave it in-graph if you want
-        # beta_early = 5.0  # tune this hyperparameter
+        violation = torch.relu(normalized_latency - 1.0) ** 2
         
         # TOTAL LOSS
         # We verify that violation > 0 before applying penalty to avoid gradient noise
@@ -161,7 +155,6 @@ class SLOAwareLoss(nn.Module):
             total_acc_loss
             + (self.lambda_lat * normalized_latency)
             + (self.mu_slo * violation)
-            # + beta_early * slo_pressure * (1.0 - p_early_mean)
         )
                      
         return total_loss, expected_latency.item(), total_acc_loss.item()

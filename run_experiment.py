@@ -5,6 +5,7 @@ import torch
 import sys
 
 # Import from src
+import src.config as Config
 from src.resnet_split import SplittableResNet18
 from src.deployment_model import DeploymentAwareResNet
 from src.network_sim import NetworkSimulator
@@ -15,28 +16,28 @@ def main():
     parser = argparse.ArgumentParser(description="Run Deployment-Aware Edge/Cloud Experiment")
     
     # Dataset Choice
-    parser.add_argument("--dataset", type=str, default="fmnist", choices=["mnist", "fmnist", "cifar10"])
+    parser.add_argument("--dataset", type=str, default=Config.DEFAULT_DATASET, choices=["mnist", "fmnist", "cifar10"])
     
     # Experiment Settings
     parser.add_argument("--exp_name", type=str, default="default_run")
-    parser.add_argument("--epochs", type=int, default=30)
-    parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--lr", type=float, default=0.001)
+    parser.add_argument("--epochs", type=int, default=Config.DEFAULT_EPOCHS)
+    parser.add_argument("--batch_size", type=int, default=Config.DEFAULT_BATCH_SIZE)
+    parser.add_argument("--lr", type=float, default=Config.DEFAULT_LR)
     
     # SLO & Network Settings
-    parser.add_argument("--slo_ms", type=float, default=70.0)
-    parser.add_argument("--rtt_ms", type=float, default=50.0)
-    parser.add_argument("--bw_mbps", type=float, default=15.0)
+    parser.add_argument("--slo_ms", type=float, default=Config.DEFAULT_SLO)
+    parser.add_argument("--rtt_ms", type=float, default=Config.DEFAULT_RTT)
+    parser.add_argument("--bw_mbps", type=float, default=Config.DEFAULT_BW)
     
     # Loss Weights
-    parser.add_argument("--lambda_lat", type=float, default=3.0)
-    parser.add_argument("--mu_slo", type=float, default=10.0)
+    parser.add_argument("--lambda_lat", type=float, default=Config.DEFAULT_LAMBDA_LAT)
+    parser.add_argument("--mu_slo", type=float, default=Config.DEFAULT_MU)
 
     # Hardware profile / edge slowdown (for ablation E / logging)
     parser.add_argument("--profile_file", type=str, default="latency_profile.json")
-    parser.add_argument("--edge_slowdown", type=float, default=20.0)
+    parser.add_argument("--edge_slowdown", type=float, default=Config.DEFAULT_SLOWDOWN)
 
-    parser.add_argument("--attempt_num", type=str, default="0")
+    parser.add_argument("--attempt_num", type=str, default=Config.DEFAULT_ATTEMPT_NUM)
     
     args = parser.parse_args()
 
@@ -74,7 +75,7 @@ def main():
         "edge_slowdown": args.edge_slowdown,
     }
     
-    with open(os.path.join(run_dir, "config.json"), "w") as f:
+    with open(os.path.join(run_dir, "Config.json"), "w") as f:
         json.dump(config, f, indent=4)
 
     # 3. Init Resources
