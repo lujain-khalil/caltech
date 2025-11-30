@@ -1,14 +1,14 @@
 {
     "dataset": "fmnist",
-    "test_accuracy": 92.35,
-    "edge_avg_latency_ms": 32.022499945014715,
-    "edge_p95_latency_ms": 32.022499945014715,
-    "cloud_avg_latency_ms": 63.62191889664061,
-    "cloud_p95_latency_ms": 80.36422146084847,
+    "test_accuracy": 92.36,
+    "edge_avg_latency_ms": 35.29412439092994,
+    "edge_p95_latency_ms": 35.29412439092994,
+    "cloud_avg_latency_ms": 65.07278539539156,
+    "cloud_p95_latency_ms": 82.23947493525624,
     "num_samples": 10000,
-    "edge_compute_total_sec": 0.032022499945014715,
-    "cloud_compute_total_sec": 0.0032022499945014715,
-    "edge_slowdown": 9.999452834301959,
+    "edge_compute_total_sec": 0.03529412439092994,
+    "cloud_compute_total_sec": 0.0035294124390929937,
+    "edge_slowdown": 9.999533995018698,
     "net_avg_bw_mbps": 15,
     "net_avg_rtt_ms": 50
 }
