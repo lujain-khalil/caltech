@@ -70,7 +70,7 @@ def train_model(config, profiles, net_sim, device, save_dir):
             
             # Metrics
             total_loss += loss.item()
-            total_latency += exp_lat
+            total_latency += exp_lat * len(data)
             
             # Simple Accuracy (Final Head)
             pred = final_pred.argmax(dim=1, keepdim=True)
@@ -83,7 +83,7 @@ def train_model(config, profiles, net_sim, device, save_dir):
 
         # --- EPOCH STATS ---
         avg_acc = 100. * correct / total_samples
-        avg_lat_ms = (total_latency / len(train_loader)) * 1000
+        avg_lat_ms = (total_latency / total_samples) * 1000
         
         # Determine best split and full split distribution
         with torch.no_grad():

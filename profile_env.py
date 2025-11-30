@@ -50,12 +50,10 @@ def profile_hardware(filename="latency_profile.json", edge_slowdown=Config.DEFAU
         json.dump(profiling_data, f, indent=4)
     print(f"Saved {filename}\n")
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Profile hardware for edge/cloud ResNet blocks")
-    parser.add_argument("--output", type=str, default="latency_profile.json",
-                        help="Output JSON filename for latency profile.")
-    parser.add_argument("--edge_slowdown", type=float, default=Config.DEFAULT_SLOWDOWN,
-                        help="Factor by which edge is slower than cloud.")
-    args = parser.parse_args()
 
-    profile_hardware(filename=args.output, edge_slowdown=args.edge_slowdown)
+if __name__ == "__main__":
+
+    profile_hardware(filename="latency_profile.json", edge_slowdown=Config.DEFAULT_SLOWDOWN)
+    for edge_slow in [3.0, 30.0, 70.0]:
+        profile_name = f"latency_profile_edge_{edge_slow}.json"    
+        profile_hardware(filename=profile_name, edge_slowdown=edge_slow)

@@ -1,14 +1,14 @@
 {
     "dataset": "cifar10",
-    "test_accuracy": 84.48,
-    "edge_avg_latency_ms": 584.875897038728,
-    "edge_p95_latency_ms": 584.875897038728,
-    "cloud_avg_latency_ms": 74.66646195659165,
-    "cloud_p95_latency_ms": 89.98361869348906,
+    "test_accuracy": 84.49,
+    "edge_avg_latency_ms": 32.022499945014715,
+    "edge_p95_latency_ms": 32.022499945014715,
+    "cloud_avg_latency_ms": 65.71688353617567,
+    "cloud_p95_latency_ms": 80.15708496021362,
     "num_samples": 10000,
-    "edge_compute_total_sec": 0.584875897038728,
-    "cloud_compute_total_sec": 0.01169751794077456,
-    "edge_slowdown": 49.99952894490057,
+    "edge_compute_total_sec": 0.032022499945014715,
+    "cloud_compute_total_sec": 0.0032022499945014715,
+    "edge_slowdown": 9.999452834301959,
     "net_avg_bw_mbps": 15,
     "net_avg_rtt_ms": 50
 }

@@ -80,12 +80,7 @@ def main(attempt_num = None):
         edge_slow = exp["edge_slowdown"]
         if edge_slow != Config.DEFAULT_SLOWDOWN:
             edge_slow = exp["edge_slowdown"]
-            profile_file = f"latency_profile_edge_{edge_slow}.json"
-
-            # Run profiling for this slowdown
-            run_command(["profile_env.py", "--edge_slowdown", str(edge_slow), "--output", profile_file],
-                        f"Hardware Profiling for {exp['name']} (EDGE_SLOWDOWN={edge_slow})")
-            
+            profile_file = f"latency_profile_edge_{edge_slow}.json"            
         
         cmd = [
             "run_experiment.py",
@@ -98,6 +93,7 @@ def main(attempt_num = None):
             "--epochs", str(Config.DEFAULT_EPOCHS), # Standardized on 30 epochs for convergence
             "--edge_slowdown", str(edge_slow),
             "--profile_file", profile_file,
+            "--attempt_num", str(attempt_num),
         ]
         
         step_desc = f"Experiment {i+1}/{len(all_experiments)}: {exp['name']}"
@@ -108,4 +104,4 @@ def main(attempt_num = None):
     print("Results are stored in the 'experiments/' directory.")
 
 if __name__ == "__main__":
-    main()
+    main(attempt_num=8)

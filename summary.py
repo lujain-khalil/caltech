@@ -105,7 +105,7 @@ def summarize_attempt(attempt_dir):
             test_accuracy = test_metrics.get("test_accuracy", "N/A")
             avg_latency = test_metrics.get("avg_latency_ms", "N/A")
             p95_latency = test_metrics.get("p95_latency_ms", "N/A")
-            split_point = test_metrics.get("split_point", "N/A")
+            split_point = test_metrics.get("split_block", "N/A")
             exit_distribution = test_metrics.get("exit_distribution", {})
             # Extract exit distributions for all heads dynamically
             exit_dist_str = ", ".join(
@@ -128,8 +128,8 @@ def summarize_attempt(attempt_dir):
                     "Train Latency (ms)": f"{train_latency_ms:.2f}" if isinstance(train_latency_ms, (int, float)) else train_latency_ms,
                     "Final Loss": f"{loss:.4f}" if isinstance(loss, (int, float)) else loss,
                     "Test Accuracy": f"{test_accuracy:.2f}" if isinstance(test_accuracy, (int, float)) else test_accuracy,
-                    "Avg Latency (ms)": f"{avg_latency:.2f}" if isinstance(avg_latency, (int, float)) else avg_latency,
-                    "P95 Latency (ms)": f"{p95_latency:.2f}" if isinstance(p95_latency, (int, float)) else p95_latency,
+                    "Test Avg Latency (ms)": f"{avg_latency:.2f}" if isinstance(avg_latency, (int, float)) else avg_latency,
+                    "Test P95 Latency (ms)": f"{p95_latency:.2f}" if isinstance(p95_latency, (int, float)) else p95_latency,
                     "Exit Distribution": exit_dist_str,
                     "Exit Head Final": exit_final,
                     "Split Point": split_point,
@@ -1066,5 +1066,5 @@ def plot_slo_vs_p95_latency(figures_dir, ablation_sets, set_styles):
 
 if __name__ == "__main__":
     # Path to attempt_ directory (adjust as needed)
-    attempt_path = Path(__file__).parent / "experiments" / "attempt_6"
+    attempt_path = Path(__file__).parent / "experiments" / "attempt_7"
     summarize_attempt(attempt_path)
