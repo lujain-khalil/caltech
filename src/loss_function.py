@@ -55,7 +55,7 @@ class SLOAwareLoss(nn.Module):
 
             # Reward making the earliest exit good
             # (helps simpler datasets lean on early exits)
-            head_weight = 1.5 if block_idx == sorted_exits[0] else 1.0
+            head_weight = 1.25 if block_idx == sorted_exits[0] else 1.0
             total_acc_loss += (head_weight * p_actual_exit * ce_i).mean()
             
             # Update probability of continuing to next layer
@@ -137,16 +137,11 @@ class SLOAwareLoss(nn.Module):
 
             candidate_latencies.append(total_t_s)
 
-        candidate_latencies = torch.tensor(candidate_latencies, device=device, dtype=torch.float32)
-
-        # Expected latency over splits
+        candidate_latencies = torch.stack(candidate_latencies).to(device)
         expected_latency = torch.sum(split_probs * candidate_latencies)
-        
-        # --- SLO PENALTY (CVaR / ReLU) ---
-        # Normalize latency by SLO so scales are stable across SLO values
         normalized_latency = expected_latency / (self.slo_target + self.epsilon)
 
-        # Calculate violation: ReLU(Latency - Target)
+        # --- SLO PENALTY (CVaR / ReLU) ---
         violation = torch.relu(normalized_latency - 1.0) ** 2
         
         # TOTAL LOSS

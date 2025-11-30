@@ -37,14 +37,25 @@ class DeploymentAwareResNet(nn.Module):
         
         # 3. EXIT THRESHOLD SCALING (Learnable gamma from paper)
         # Gamma controls the sharpness of the sigmoid for exit probability
-        self.exit_scale = nn.Parameter(torch.ones(len(exit_points)))
-        self.exit_threshold = nn.Parameter(torch.empty(len(exit_points)).uniform_(0, 1))
+        self.raw_exit_scale = nn.Parameter(torch.ones(len(exit_points)))
+        self.raw_exit_threshold = nn.Parameter(torch.empty(len(exit_points)).uniform_(0, 1))
 
     def _get_channels_for_block(self, idx):
         # Helper to hardcode channel sizes for standard ResNet18 blocks
         # Block 0: 64, Block 1: 64, Block 2: 128, Block 3: 256, Block 4: 512
         sizes = {0: 64, 1: 64, 2: 128, 3: 256, 4: 512}
         return sizes.get(idx, 512)
+    
+    @property
+    def exit_scale(self):
+        # gamma >= 0
+        return F.softplus(self.raw_exit_scale)
+
+    @property
+    def exit_threshold(self):
+        # tau in (0, 1)
+        return torch.sigmoid(self.raw_exit_threshold)
+
 
     def forward(self, x, temperature=1.0):
         """

@@ -42,15 +42,15 @@ def main(attempt_num = None):
 
     # ABLATION A: SLO SENSITIVITY
     ablation_a = [
-        {"name": "A_slo_100", "slo": 100, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Relaxed
-        {"name": "A_slo_060",  "slo": 60, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN},
-        {"name": "A_slo_040",  "slo": 40, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Stress Test
+        {"name": "A_slo_600", "slo": 600, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Relaxed
+        {"name": "A_slo_100", "slo": 100, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN},
+        {"name": "A_slo_040", "slo": 40 , "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Stress Test
     ]
 
     # ABLATION B: NETWORK CONDITIONS
     ablation_b = [
         {"name": "B_net_fast",       "slo": Config.DEFAULT_SLO, "rtt": 10,  "bw": 50, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # 5G
-        {"name": "B_net_slow",       "slo": Config.DEFAULT_SLO, "rtt": 75,  "bw": 3,  "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # 3G
+        {"name": "B_net_slow",       "slo": Config.DEFAULT_SLO, "rtt": 150, "bw": 5,  "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # 3G
         {"name": "B_net_impossible", "slo": Config.DEFAULT_SLO, "rtt": 500, "bw": 1,  "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": Config.DEFAULT_SLOWDOWN}, # Satellite
     ]
 
@@ -62,8 +62,8 @@ def main(attempt_num = None):
 
     # ABLATION D: EDGE SLOWDOWN SENSITIVITY
     ablation_d = [
-        {"name": "D_edge_003",   "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": 3.0},
-        {"name": "D_edge_050",  "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": 50.0},
+        {"name": "D_edge_003", "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": 3.0},
+        {"name": "D_edge_010", "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": 10.0},
         {"name": "D_edge_100", "slo": Config.DEFAULT_SLO, "rtt": Config.DEFAULT_RTT, "bw": Config.DEFAULT_BW, "data": Config.DEFAULT_DATASET, "mu": Config.DEFAULT_MU, "edge_slowdown": 100.0},
     ]
 
