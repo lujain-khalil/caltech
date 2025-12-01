@@ -38,7 +38,7 @@ def train_model(config, profiles, net_sim, device, save_dir):
     training_history = []
 
     print(f"\nStarting Training (SLO: {slo_target*1000:.1f}ms)...")
-    print(f"{'Epoch':<6} | {'Acc':<8} | {'Avg Latency':<12} | {'Split Layer':<15} | {'Exit Probs (Avg)'}")
+    print(f"{'Epoch':<6} | {'Acc':<8} | {'Avg Latency':<12} | {'Avg p95 Latency':<12} | {'Split Layer':<15} | {'Exit Probs (Avg)'}")
     print("-" * 85)
 
     for epoch in range(epochs):
@@ -47,7 +47,12 @@ def train_model(config, profiles, net_sim, device, save_dir):
         total_latency = 0
         correct = 0
         total_samples = 0
-        
+
+        sum_norm_lat = 0.0          # sum of normalized avg lat, weighted by samples
+        sum_raw_p95 = 0.0           # sum of batch p95 lat (seconds), unweighted
+        sum_norm_p95 = 0.0          # sum of batch normalized p95, unweighted
+        num_batches = 0
+
         # Track average exit probabilities per head for this epoch
         exit_prob_tracker = {k: [] for k in model.exit_points}
 
@@ -61,16 +66,27 @@ def train_model(config, profiles, net_sim, device, save_dir):
             optimizer.zero_grad()
             final_pred, exit_preds, split_probs, exit_confidences = model(data, temperature=current_temp)
             
-            loss, exp_lat, acc_loss = criterion(
+            loss, exp_lat_mean_sec, exp_lat_p95_sec, norm_lat_mean, norm_lat_p95, acc_loss = criterion(
                 final_pred, exit_preds, split_probs, exit_confidences, target, network_state
             )
-            
+
             loss.backward()
             optimizer.step()
             
             # Metrics
             total_loss += loss.item()
-            total_latency += exp_lat * len(data)
+
+            # Avg latency: keep a sample-weighted mean over the epoch
+            total_latency += exp_lat_mean_sec * len(data)   # seconds * batch_size
+
+            # Normalized avg latency: same weighting
+            sum_norm_lat += norm_lat_mean * len(data)
+
+            # p95 terms: average over batches (each batch's distribution)
+            sum_raw_p95 += exp_lat_p95_sec
+            sum_norm_p95 += norm_lat_p95
+
+            num_batches += 1
             
             # Simple Accuracy (Final Head)
             pred = final_pred.argmax(dim=1, keepdim=True)
@@ -83,8 +99,20 @@ def train_model(config, profiles, net_sim, device, save_dir):
 
         # --- EPOCH STATS ---
         avg_acc = 100. * correct / total_samples
+
+        # Actual average expected latency over epoch (seconds → ms)
+        avg_lat_sec = total_latency / total_samples
         avg_lat_ms = (total_latency / total_samples) * 1000
         
+        # Sample-weighted normalized avg latency over epoch
+        normalized_avg_lat = sum_norm_lat / total_samples  # dimensionless
+
+        # Average of per-batch p95 (approximate epoch p95)
+        avg_p95_lat_sec = sum_raw_p95 / num_batches
+        avg_p95_lat_ms = avg_p95_lat_sec * 1000.0
+
+        normalized_p95_lat = sum_norm_p95 / num_batches  # dimensionless
+
         # Determine best split and full split distribution
         with torch.no_grad():
             split_probs_soft = torch.nn.functional.softmax(model.split_logits, dim=0)
@@ -109,16 +137,23 @@ def train_model(config, profiles, net_sim, device, save_dir):
                 avg_exit_probs[int(k)] = 0.0
 
         probs_str = str([f"{avg_exit_probs[int(k)]:.2f}" for k in sorted(exit_prob_tracker.keys())])
-        normalized_latency = (avg_lat_ms / (slo_target * 1000.0)) if slo_target > 0 else 0.0
 
-        print(f"{epoch+1:<6} | {avg_acc:<7.1f}% | {avg_lat_ms:<9.2f} ms | Block {best_split} ({split_conf:.2f}) | {probs_str}")
+        print(
+            f"{epoch+1:<6} | {avg_acc:<7.1f}%"
+            f" | {avg_lat_ms:<9.2f} ms"
+            f" | p95 {avg_p95_lat_ms:<9.2f} ms"
+            f" | Block {best_split} ({split_conf:.2f})"
+            f" | {probs_str}"
+        )
 
         # Save logs
         log_entry = {
             "epoch": epoch + 1,
             "accuracy": avg_acc,
             "latency_ms": avg_lat_ms,
-            "normalized_latency": normalized_latency,
+            "p95_latency_ms": avg_p95_lat_ms,                 # actual p95 expected latency
+            "normalized_latency": normalized_avg_lat,         # E[T]/SLO
+            "normalized_p95_latency": normalized_p95_lat,     # p95(T)/SLO
             "split_decision": best_split,
             "split_confidence": split_conf,
             "split_probs": split_probs_list,

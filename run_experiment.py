@@ -75,7 +75,7 @@ def main():
         "edge_slowdown": args.edge_slowdown,
     }
     
-    with open(os.path.join(run_dir, "Config.json"), "w") as f:
+    with open(os.path.join(run_dir, "config.json"), "w") as f:
         json.dump(config, f, indent=4)
 
     # 3. Init Resources

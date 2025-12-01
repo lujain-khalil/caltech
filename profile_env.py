@@ -54,6 +54,6 @@ def profile_hardware(filename="latency_profile.json", edge_slowdown=Config.DEFAU
 if __name__ == "__main__":
 
     profile_hardware(filename="latency_profile.json", edge_slowdown=Config.DEFAULT_SLOWDOWN)
-    for edge_slow in [3.0, 30.0, 70.0]:
+    for edge_slow in Config.EDGE_SLOWDOWN_ABLATIONS:
         profile_name = f"latency_profile_edge_{edge_slow}.json"    
         profile_hardware(filename=profile_name, edge_slowdown=edge_slow)

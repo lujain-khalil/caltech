@@ -18,7 +18,7 @@ def collect_code_files():
             
     # Collect .py files from current directory, excluding summary.py
     for py_file in sorted(base_dir.glob("*.py")):
-        if py_file.name != "summary.py" and py_file.name != "code.py":
+        if py_file.name not in ["summary.py", "code.py", "main.py"]:
             output_lines.append(f"\n{'='*60}")
             output_lines.append(f"FILE: {py_file.relative_to(base_dir)}")
             output_lines.append('='*60)
