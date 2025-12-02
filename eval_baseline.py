@@ -60,8 +60,8 @@ def evaluate_baseline(model, dataset_name, profiles, device, net_sim, batch_size
 
             # EDGE-ONLY:
             # all blocks on edge; no network cost
-            batch_edge_latency = edge_compute_total
-            latencies_edge.extend([batch_edge_latency] * batch_size_actual)
+            per_sample_edge_latency = edge_compute_total / batch_size_actual
+            latencies_edge.extend([per_sample_edge_latency] * batch_size_actual)
 
             # CLOUD-ONLY:
             # send input once, then all blocks on cloud
@@ -70,8 +70,8 @@ def evaluate_baseline(model, dataset_name, profiles, device, net_sim, batch_size
                 bw_bps=bw_bps,
                 rtt_sec=rtt_sec,
             )
-            batch_cloud_latency = cloud_compute_total + t_comm
-            latencies_cloud.extend([batch_cloud_latency] * batch_size_actual)
+            per_sample_cloud_latency = (cloud_compute_total + t_comm) / batch_size_actual
+            latencies_cloud.extend([per_sample_cloud_latency] * batch_size_actual)
 
     import numpy as np
     latencies_edge = np.array(latencies_edge)
