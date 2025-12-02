@@ -208,12 +208,11 @@ def main():
     print(f"  Block 2: layer2 (128 channels)")
     print(f"  Block 3: layer3 (256 channels)")
     print(f"  Block 4: layer4 (512 channels)")
-    print(f"\nRecommendation: Use [2, 3, 4] for better feature depth before exiting")
     
     model = DeploymentAwareResNet(
         backbone, 
         num_classes=10, 
-        exit_points=args.exit_points  # Now configurable!
+        exit_points=args.exit_points 
     )
     
     config['model_instance'] = model

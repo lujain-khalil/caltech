@@ -200,15 +200,17 @@ def evaluate_model(model, net_sim, profiles, device,
         "test_accuracy": accuracy,
         "avg_latency_ms": avg_latency,
         "p95_latency_ms": p95_latency,
+
         "exit_distribution": exit_counts,
         "exit_rates": exit_rates,
-        # "split_point": split_point,
+
         "split_block": int(split_block),
-        # "split_idx": int(split_idx),
         "split_probs": split_probs_list,
+
         "exit_thresholds": exit_thresholds,
         "exit_scales": exit_scales,
         "exit_confidence_stats": exit_conf_stats,
+        
         "num_samples": total_samples,
         "dataset": dataset_name_lower,
         "edge_slowdown": edge_slowdown,

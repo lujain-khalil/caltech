@@ -177,6 +177,7 @@ import numpy as np
 
 from .loss_function import SLOAwareLoss
 from .data_utils import get_dataloaders
+from . import config as Config
 
 def train_model(config, profiles, net_sim, device, save_dir):
     """
@@ -199,10 +200,10 @@ def train_model(config, profiles, net_sim, device, save_dir):
     model = config['model_instance']
     model.to(device)
     
-    # Track which stage we're in
-    stage1_epochs = max(5, epochs // 4)      # 25% for backbone
-    stage2_epochs = max(5, epochs // 4)      # 25% for exits
-    stage3_epochs = epochs - stage1_epochs - stage2_epochs  # 50% for joint
+    # Track which stage we're in  
+    stage1_epochs = max(5, int(epochs * Config.STAGE1_RATIO))
+    stage2_epochs = max(5, int(epochs * Config.STAGE2_RATIO))
+    stage3_epochs = epochs - stage1_epochs - stage2_epochs
     
     training_history = []
     
@@ -224,16 +225,12 @@ def train_model(config, profiles, net_sim, device, save_dir):
     # Disable all exit heads during Stage 1
     for param in model.exit_heads.parameters():
         param.requires_grad = False
-    if hasattr(model, 'confidence_heads'):
-        for param in model.confidence_heads.parameters():
-            param.requires_grad = False
     
-    # Only train backbone + split logits
-    optimizer_stage1 = optim.Adam([
-        {'params': model.backbone.parameters()},
-        {'params': [model.split_logits], 'lr': config['lr'] * 0.1},  # Slower for splits
-    ], lr=config['lr'])
-    
+    # Only train backbone
+    optimizer_stage1 = optim.Adam(
+        model.backbone.parameters(),
+        lr=config['lr']
+    )
     criterion_ce = torch.nn.CrossEntropyLoss()
     
     for epoch in range(1, stage1_epochs + 1):
@@ -291,17 +288,12 @@ def train_model(config, profiles, net_sim, device, save_dir):
     # Enable exit heads
     for param in model.exit_heads.parameters():
         param.requires_grad = True
-    if hasattr(model, 'confidence_heads'):
-        for param in model.confidence_heads.parameters():
-            param.requires_grad = True
     
     # Also train exit thresholds and scales
     trainable_params = [
         {'params': model.exit_heads.parameters()},
         {'params': [model.raw_exit_threshold, model.raw_exit_scale]},
     ]
-    if hasattr(model, 'confidence_heads'):
-        trainable_params.append({'params': model.confidence_heads.parameters()})
     
     optimizer_stage2 = optim.Adam(trainable_params, lr=config['lr'])
     
@@ -352,7 +344,7 @@ def train_model(config, profiles, net_sim, device, save_dir):
                 ) * (2.0 ** 2)
                 
                 # Combined loss (more weight on CE for early exits)
-                alpha = 0.7  # Weight for CE loss
+                alpha = Config.KD_ALPHA  # Weight for CE loss
                 loss = alpha * ce_loss + (1 - alpha) * kd_loss
                 
                 loss.backward()
@@ -370,9 +362,8 @@ def train_model(config, profiles, net_sim, device, save_dir):
             acc_final = 100.0 * correct_final / total
             avg_loss = running_loss / total
             
-            if epoch % 2 == 0:  # Print every 2 epochs to reduce clutter
-                print(f"    Epoch {epoch:2d}/{stage2_epochs} | Loss: {avg_loss:.4f} | "
-                      f"Exit Acc: {acc_exit:.2f}% | Final Acc: {acc_final:.2f}%")
+            print(f"    Epoch {epoch:2d}/{stage2_epochs} | Loss: {avg_loss:.4f} | "
+                  f"Exit Acc: {acc_exit:.2f}% | Final Acc: {acc_final:.2f}%")
             
             training_history.append({
                 "epoch": stage1_epochs + epoch,
@@ -399,8 +390,8 @@ def train_model(config, profiles, net_sim, device, save_dir):
         profiles=profiles, 
         network_sim=net_sim, 
         slo_target_sec=slo_target,
-        lambda_lat=0.3,   # REDUCED from 2.0
-        mu_slo=0.5        # REDUCED from 10.0
+        lambda_lat=config['lambda_lat'] if 'lambda_lat' in config else Config.DEFAULT_LAMBDA_LAT,   
+        mu_slo=config['mu_slo'] if 'mu_slo' in config else Config.DEFAULT_MU,
     )
     
     optimizer_stage3 = optim.Adam(model.parameters(), lr=config['lr'] * 0.1)  # Lower LR
