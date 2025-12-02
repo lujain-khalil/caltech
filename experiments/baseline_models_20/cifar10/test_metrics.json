@@ -1,0 +1,14 @@
+{
+    "dataset": "cifar10",
+    "test_accuracy": 84.48,
+    "edge_avg_latency_ms": 35.29412439092994,
+    "edge_p95_latency_ms": 35.29412439092994,
+    "cloud_avg_latency_ms": 65.97187579419806,
+    "cloud_p95_latency_ms": 83.28758302854958,
+    "num_samples": 10000,
+    "edge_compute_total_sec": 0.03529412439092994,
+    "cloud_compute_total_sec": 0.0035294124390929937,
+    "edge_slowdown": 9.999533995018698,
+    "net_avg_bw_mbps": 15,
+    "net_avg_rtt_ms": 50
+}
