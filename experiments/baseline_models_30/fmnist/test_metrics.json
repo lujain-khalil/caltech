@@ -1,0 +1,14 @@
+{
+    "dataset": "fmnist",
+    "test_accuracy": 92.44,
+    "edge_avg_latency_ms": 35.14176467433572,
+    "edge_p95_latency_ms": 35.14176467433572,
+    "cloud_avg_latency_ms": 64.25230558249228,
+    "cloud_p95_latency_ms": 80.49904222002819,
+    "num_samples": 10000,
+    "edge_compute_total_sec": 0.03514176467433572,
+    "cloud_compute_total_sec": 0.003514176467433572,
+    "edge_slowdown": 9.999515997279694,
+    "net_avg_bw_mbps": 15,
+    "net_avg_rtt_ms": 50
+}
