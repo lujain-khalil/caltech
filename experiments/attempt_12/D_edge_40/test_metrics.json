@@ -1,0 +1,59 @@
+{
+    "test_accuracy": 93.05,
+    "avg_latency_ms": 34.309107636101544,
+    "p95_latency_ms": 52.798137068748474,
+    "exit_distribution": {
+        "1": 7859,
+        "2": 2027,
+        "3": 112,
+        "final": 2
+    },
+    "exit_rates": {
+        "1": 0.7859,
+        "2": 0.2027,
+        "3": 0.0112,
+        "final": 0.0002
+    },
+    "split_block": 3,
+    "split_probs": [
+        0.04829651862382889,
+        0.0822070837020874,
+        0.4204625189304352,
+        0.4490339159965515
+    ],
+    "exit_thresholds": {
+        "1": 0.8389493823051453,
+        "2": 0.5899234414100647,
+        "3": 0.48679932951927185
+    },
+    "exit_scales": {
+        "1": 3.2893807888031006,
+        "2": 3.2559478282928467,
+        "3": 3.110504388809204
+    },
+    "exit_confidence_stats": {
+        "1": {
+            "mean_conf_exit": 0.9824488977163951,
+            "min_conf_exit": 0.8390230536460876,
+            "max_conf_exit": 1.0,
+            "num_exited": 7859
+        },
+        "2": {
+            "mean_conf_exit": 0.948301973164111,
+            "min_conf_exit": 0.5920975804328918,
+            "max_conf_exit": 1.0,
+            "num_exited": 2027
+        },
+        "3": {
+            "mean_conf_exit": 0.8410745627645936,
+            "min_conf_exit": 0.49654504656791687,
+            "max_conf_exit": 0.9999772310256958,
+            "num_exited": 112
+        }
+    },
+    "num_samples": 10000,
+    "dataset": "fmnist",
+    "edge_slowdown": 40.0,
+    "net_avg_bw_mbps": 15.0,
+    "net_avg_rtt_ms": 50.0
+}
