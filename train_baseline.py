@@ -82,8 +82,11 @@ def train_ce_model(dataset_name, device, epochs, batch_size, lr):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Baseline CE-only ResNet18 on MNIST/FMNIST/CIFAR10 with edge vs cloud latency."
+        description="Baseline CE-only ResNet18 on MNIST/FMNIST/CIFAR10/CIFAR100 with edge vs cloud latency."
     )
+    parser.add_argument("--dataset", type=str, default=None,
+                        choices=["mnist", "fmnist", "cifar10", "cifar100"],
+                        help="Specific dataset to train. If not specified, trains all datasets.")
     parser.add_argument("--epochs", type=int, default=Config.DEFAULT_EPOCHS)
     parser.add_argument("--batch_size", type=int, default=Config.DEFAULT_BATCH_SIZE)
     parser.add_argument("--lr", type=float, default=Config.DEFAULT_LR)
@@ -109,7 +112,11 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net_sim = NetworkSimulator(avg_bw_mbps=args.bw_mbps, avg_rtt_ms=args.rtt_ms)
 
-    datasets = ["mnist", "fmnist", "cifar10"]
+    # If specific dataset is provided, train only that; otherwise train all
+    if args.dataset:
+        datasets = [args.dataset]
+    else:
+        datasets = ["mnist", "fmnist", "cifar10", "cifar100"]
 
     base_dir = os.path.join("experiments", f"baseline_models")
     os.makedirs(base_dir, exist_ok=True)

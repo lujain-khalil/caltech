@@ -17,7 +17,6 @@ class DeploymentAwareResNet(nn.Module):
         
         # 1. IMPROVED EARLY EXIT HEADS
         self.exit_heads = nn.ModuleDict()
-        self.confidence_heads = nn.ModuleDict()  # NEW: Separate confidence estimation
         
         for idx in exit_points:
             in_channels = self._get_channels_for_block(idx)

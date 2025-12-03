@@ -22,7 +22,7 @@ DEFAULT_EXIT_POINTS = [1, 2, 3]  # After blocks 1, 2, 3
 # Ablations
 SLO_ABLATIONS = [200, 100, 60]  # in ms
 NET_ABLATIONS = {"fast": (10, 50), "slow": (150, 5), "impossible": (500, 1)}  # (rtt in ms, bw in Mbps)
-DATA_ABLATIONS = ["mnist", "cifar10"]
+DATA_ABLATIONS = ["mnist", "cifar10", "cifar100"]
 EDGE_SLOWDOWN_ABLATIONS = [5.0, 40.0, 100.0]
 
 # Training stage configuration

@@ -38,7 +38,7 @@ class NetworkSimulator:
         """
         # Fixed overheads (alpha) and queuing delays (beta) 
         # assumed small constants for this simulation
-        alpha = 0.005  # 5ms handshake overhead
+        alpha = 0.005  # 5ms handshake overhead 
         beta = 1.0     
         
         transmission_delay = data_size_bytes / (bw_bps / 8.0)

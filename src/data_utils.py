@@ -43,6 +43,22 @@ def get_dataloaders(dataset_name, batch_size):
         test_d = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
         num_classes = 10
         
+    elif dataset_name == "cifar100":
+        # CIFAR-100 is already 3 channels, 32x32
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
+        ])
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
+        ])
+        train_d = datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
+        test_d = datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
+        num_classes = 100
+        
     else:
         raise ValueError(f"Dataset {dataset_name} not supported.")
 

@@ -127,7 +127,7 @@ def main():
     
     # Dataset Choice
     parser.add_argument("--dataset", type=str, default=Config.DEFAULT_DATASET, 
-                        choices=["mnist", "fmnist", "cifar10"])
+                        choices=["mnist", "fmnist", "cifar10", "cifar100"])
     
     # Experiment Settings
     parser.add_argument("--exp_name", type=str, default="default_run")
@@ -199,10 +199,18 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net_sim = NetworkSimulator(avg_bw_mbps=args.bw_mbps, avg_rtt_ms=args.rtt_ms)
 
-    # Init Model with better exit placement
-    backbone = SplittableResNet18(num_classes=10, input_channels=3, pretrained=True)
+    # Determine num_classes from dataset
+    from src.data_utils import get_dataloaders
+    _, _, num_classes, _ = get_dataloaders(
+        dataset_name=args.dataset,
+        batch_size=args.batch_size,
+    )
     
-    print(f"\nInitializing model with exits at blocks: {args.exit_points}")
+    # Init Model with better exit placement
+    backbone = SplittableResNet18(num_classes=num_classes, input_channels=3, pretrained=True)
+    
+    print(f"\nInitializing model with {num_classes} classes")
+    print(f"Initializing model with exits at blocks: {args.exit_points}")
     print(f"  Block 0: conv1 + bn + relu + maxpool")
     print(f"  Block 1: layer1 (64 channels)")
     print(f"  Block 2: layer2 (128 channels)")
@@ -211,7 +219,7 @@ def main():
     
     model = DeploymentAwareResNet(
         backbone, 
-        num_classes=10, 
+        num_classes=num_classes, 
         exit_points=args.exit_points 
     )
     
