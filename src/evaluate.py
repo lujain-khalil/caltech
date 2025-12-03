@@ -24,7 +24,7 @@ def evaluate_model(model, net_sim, profiles, device,
     dataset_name_lower = dataset_name.lower() if isinstance(dataset_name, str) else "fmnist"
     
     # Validate dataset choice
-    valid_datasets = {"cifar10", "mnist", "fmnist"}
+    valid_datasets = {"cifar10", "mnist", "fmnist", "cifar100"}
     if dataset_name_lower not in valid_datasets:
         print(f"Warning: Dataset '{dataset_name}' not recognized. Using 'fmnist' instead.")
         dataset_name_lower = "fmnist"
@@ -32,7 +32,7 @@ def evaluate_model(model, net_sim, profiles, device,
     print(f"Loading {dataset_name_lower.upper()} test dataset for evaluation...")
     
     # Get the correct test loader
-    _, test_loader, _, _ = get_dataloaders(
+    _, test_loader, num_classes, _ = get_dataloaders(
         dataset_name=dataset_name_lower,
         batch_size=batch_size,
     )
@@ -69,7 +69,7 @@ def evaluate_model(model, net_sim, profiles, device,
             # We must manually run the blocks to simulate the decision flow
             x = data
             exited_mask = torch.zeros(batch_curr_size, dtype=torch.bool, device=device)
-            final_preds = torch.zeros(batch_curr_size, 10, device=device)
+            final_preds = torch.zeros(batch_curr_size, num_classes, device=device)
             
             # --- EDGE EXECUTION ---
             current_latency = torch.zeros(batch_curr_size, device=device)
@@ -219,3 +219,77 @@ def evaluate_model(model, net_sim, profiles, device,
     }
     
     return results
+
+# ...existing code...
+
+if __name__ == "__main__":
+    import argparse
+    import json
+    import os
+    from pathlib import Path
+    from .network_sim import NetworkSimulator
+    import sys
+
+    parser = argparse.ArgumentParser(description="Evaluate a trained model from experiment directory")
+    parser.add_argument("--experiment_name", type=str, default="attempt_12/C_data_cifar100/")
+    parser.add_argument("--batch-size", type=int, default=Config.DEFAULT_BATCH_SIZE, help="Batch size for evaluation")
+    
+    args = parser.parse_args()
+    
+    # Construct model and simulator paths
+    experiment_dir = Path(__file__).parent.parent / "experiments" / args.experiment_name.rstrip("/")
+    model_path = experiment_dir / "model.pth"
+    config_path = experiment_dir / "config.json"
+
+    net_sim = NetworkSimulator(avg_bw_mbps=Config.DEFAULT_BW, avg_rtt_ms=Config.DEFAULT_RTT)
+    profile_file = "latency_profile.json"
+    
+    if not os.path.exists(profile_file):
+        print(f"Error: {profile_file} not found. Run profile_env.py first.")
+        sys.exit(1)
+
+    print(f"Loading Profile: {profile_file}")
+    with open(profile_file, "r") as f:
+        profiles = json.load(f)
+    
+    # Verify paths exist
+    if not model_path.exists():
+        print(f"Error: Model not found at {model_path}")
+        exit(1)
+        exit(1)
+    if not profile_file.exists():
+        print(f"Error: Profiles not found at {profile_file}")
+        exit(1)
+    
+    # Load configuration
+    dataset_name = Config.DEFAULT_DATASET
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            config_data = json.load(f)
+            dataset_name = config_data.get("dataset", Config.DEFAULT_DATASET)
+    
+    # Load model, simulator, and profiles
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = torch.load(model_path, map_location=device)
+    
+    # Run evaluation
+    print(f"\nEvaluating experiment: {args.experiment_name}")
+    results = evaluate_model(model, net_sim, profiles, device, 
+                            dataset_name=dataset_name, 
+                            batch_size=args.batch_size)
+    
+    # Print and save results
+    print("\n" + "="*50)
+    print("EVALUATION RESULTS")
+    print("="*50)
+    print(f"Test Accuracy: {results['test_accuracy']:.2f}%")
+    print(f"Avg Latency: {results['avg_latency_ms']:.2f} ms")
+    print(f"P95 Latency: {results['p95_latency_ms']:.2f} ms")
+    print(f"Exit Distribution: {results['exit_distribution']}")
+    print("="*50 + "\n")
+    
+    # Save results
+    results_path = experiment_dir / "test_metrics.json"
+    with open(results_path, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"Results saved to {results_path}")
